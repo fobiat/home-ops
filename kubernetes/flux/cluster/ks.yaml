@@ -1,0 +1,38 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cluster-apps
+  namespace: flux-system
+spec:
+  interval: 30m
+  path: ./kubernetes/apps
+  prune: true
+  wait: false
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
+  postBuild:
+    substituteFrom:
+      - kind: ConfigMap
+        name: cluster-settings
+  # So no HelmRelease repeats this block. From onedr0p/home-ops.
+  patches:
+    - target:
+        kind: HelmRelease
+      patch: |
+        - op: add
+          path: /spec/install
+          value:
+            crds: CreateReplace
+        - op: add
+          path: /spec/upgrade
+          value:
+            crds: CreateReplace
+            strategy: RemediateOnFailure
+            remediation:
+              retries: 2
