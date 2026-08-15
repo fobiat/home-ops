@@ -5,7 +5,7 @@ set -euo pipefail
 
 CEILING="${COMMENT_CEILING:-10}"
 
-mapfile -t files < <(git ls-files '*.yaml' '*.yml' '*.sh' ':!:.archive/**' ':!:**/*.sops.yaml')
+mapfile -t files < <(git ls-files '*.yaml' '*.yml' '*.sh' '*.ps1' ':!:.archive/**' ':!:**/*.sops.yaml')
 [[ ${#files[@]} -eq 0 ]] && { echo "no files to measure"; exit 0; }
 
 total=0

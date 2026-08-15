@@ -1,0 +1,54 @@
+---
+# Opens an issue when the gate fails on main, so a broken main is tracked rather than
+# noticed three weeks later. Reuses one issue per workflow instead of opening a new one
+# on every failed run, and closes it when the gate goes green again.
+name: ci-failure-issue
+on:
+  workflow_run:
+    workflows: ["lint"]
+    types: [completed]
+    branches: ["main"]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  track:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open, update or close the tracking issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          WORKFLOW: ${{ github.event.workflow_run.name }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          title="CI failing on main: ${WORKFLOW}"
+          existing=$(gh issue list --repo "${REPO}" --state open --label ci-failure \
+            --search "${title} in:title" --json number --jq '.[0].number // empty')
+
+          if [[ "${CONCLUSION}" == "success" ]]; then
+            if [[ -n "${existing}" ]]; then
+              gh issue close "${existing}" --repo "${REPO}" \
+                --comment "Green again on \`${SHA:0:7}\`. Closing."
+            fi
+            exit 0
+          fi
+
+          body=$(printf '%s\n' \
+            "\`${WORKFLOW}\` finished with \`${CONCLUSION}\` on \`main\`." \
+            "" \
+            "- Commit: \`${SHA}\`" \
+            "- Run: ${RUN_URL}" \
+            "" \
+            "This issue closes itself when the gate next passes on main.")
+
+          if [[ -n "${existing}" ]]; then
+            gh issue comment "${existing}" --repo "${REPO}" --body "${body}"
+          else
+            gh issue create --repo "${REPO}" --title "${title}" \
+              --label ci-failure --label area/ci --body "${body}"
+          fi
