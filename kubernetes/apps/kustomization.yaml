@@ -8,3 +8,4 @@ kind: Kustomization
 resources:
   - ./cert-manager
   - ./network
+  - ./reloader
