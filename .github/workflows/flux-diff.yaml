@@ -23,29 +23,42 @@ jobs:
         uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.base.sha }}
-          path: base
+          path: pr/base
 
       - name: Checkout head
         uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          path: head
+          path: pr/head
+
+      # There is nothing to diff against until a Flux tree exists on main.
+      - name: Is there anything to diff
+        id: check
+        run: |
+          if [[ -d pr/base/kubernetes/flux/cluster && -d pr/head/kubernetes/flux/cluster ]]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "No Flux tree on both sides yet, skipping."
+          fi
 
       # flux-local shells out to the flux CLI, which is not on the runner by default.
       - name: Install flux
+        if: steps.check.outputs.ready == 'true'
         uses: fluxcd/flux2/action@v2.9.4
 
       - name: Diff
+        if: steps.check.outputs.ready == 'true'
         uses: allenporter/flux-local/action/diff@7.7.1
         id: diff
         with:
           sources: flux-system
-          path: base/kubernetes/flux/cluster
-          path-orig: head/kubernetes/flux/cluster
+          path: pr/head/kubernetes/flux/cluster
+          path-orig: pr/base/kubernetes/flux/cluster
           resource: ${{ matrix.resource }}
 
       - name: Comment on the PR
-        if: ${{ steps.diff.outputs.diff != '' }}
+        if: steps.check.outputs.ready == 'true' && steps.diff.outputs.diff != ''
         uses: mshick/add-pr-comment@v2
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
