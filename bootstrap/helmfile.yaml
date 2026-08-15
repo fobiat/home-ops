@@ -64,3 +64,7 @@ releases:
           enabled: true
           enableAlpn: true
           enableAppProtocol: true
+        # LB-IPAM assigns the address; L2 announcements answer ARP for it on the LAN.
+        # Neither works without the other on a single flat network with no BGP.
+        l2announcements:
+          enabled: true
