@@ -28,6 +28,23 @@ and take the node off the tailnet when they do.
 
 ## 1. The VM
 
+There is a script for this, because setting up Hyper-V by hand is fiddly if you do not
+live in Windows. From an **elevated** PowerShell prompt on the Windows host:
+
+```powershell
+.\scripts\hyperv\New-TalosVM.ps1
+```
+
+The first run needs to know which network adapter to bind the external switch to. If it
+cannot work that out on its own it prints the available adapters and stops, so re-run it
+with `-NetAdapterName "Ethernet"` or whichever it lists. Pass `-Force` to delete and
+recreate an existing VM.
+
+It creates the switch, downloads the right ISO, builds the VM and starts it, then tells
+you the address to point `talosctl` at. It deliberately does not apply any Talos config.
+
+What it sets, and why, if you would rather do it by hand:
+
 Hyper-V, Generation 2.
 
 | Setting | Value | Why |
@@ -56,8 +73,18 @@ same schematic always produces the same ID:
 curl -sX POST --data-binary @talos/schematic.yaml https://factory.talos.dev/schematics
 ```
 
-Commit both the schematic and the ID it returns. The installer image is then
-`factory.talos.dev/installer/<id>:v1.13.8`.
+The current ID is in `talos/schematic-id.txt`:
+
+```
+4a0d65c669d46663f377e7161e50cfd570c401f26fd9e7bda34a0216b6f1922b
+```
+
+So the installer image is
+`factory.talos.dev/installer/4a0d65c669d46663f377e7161e50cfd570c401f26fd9e7bda34a0216b6f1922b:v1.13.8`,
+and the ISO the script downloads is the same ID under `/image/`.
+
+Regenerate and re-commit the ID whenever `talos/schematic.yaml` changes. Renovate tracks
+the Talos version in the image tag, not the schematic contents.
 
 `siderolabs/tailscale` must be in the schematic. It is how you reach the node when the
 cluster is broken, and adding it later means rebuilding the image and reinstalling.
