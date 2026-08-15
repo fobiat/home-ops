@@ -1,0 +1,32 @@
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    "github>home-operations/renovate-presets//custom-managers/mise.json5",
+    "github>home-operations/renovate-presets//apps/talosFactory.json5",
+  ],
+  timezone: "Europe/London",
+  schedule: ["* 0-6 * * 1"],
+  ignorePaths: [".archive/**"],
+  packageRules: [
+    {
+      description: "Talos and Kubernetes are deliberate, manual upgrades. Every one is an outage on a single node.",
+      matchPackageNames: ["siderolabs/talos", "ghcr.io/siderolabs/installer"],
+      automerge: false,
+      addLabels: ["upgrade/outage"],
+    },
+    {
+      description: "Patch bumps for tooling can merge themselves.",
+      matchManagers: ["mise"],
+      matchUpdateTypes: ["patch"],
+      automerge: true,
+    },
+    {
+      description: "Group Flux together so the controllers never drift apart.",
+      matchPackageNames: ["/fluxcd/"],
+      groupName: "flux",
+    },
+  ],
+}

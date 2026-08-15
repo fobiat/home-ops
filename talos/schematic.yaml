@@ -1,0 +1,9 @@
+---
+# POST this to https://factory.talos.dev/schematics to get the schematic ID.
+# It is content-addressed, so the same file always returns the same ID.
+customization:
+  systemExtensions:
+    officialExtensions:
+      # How the node is reached when the cluster is broken. Starts before
+      # Kubernetes. Cannot be added later without rebuilding the image.
+      - siderolabs/tailscale

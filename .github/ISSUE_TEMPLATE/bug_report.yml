@@ -1,0 +1,62 @@
+---
+name: Something is broken
+description: A component is not behaving, or the cluster is in a state it should not be
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing: if the whole cluster is unreachable, check whether the Windows
+        host rebooted. It is a Hyper-V guest on a desktop in daily use, and Windows
+        Update is the most common cause of an unexplained outage. See
+        [troubleshooting](https://github.com/fobiat/home-ops/blob/main/docs/runbooks/troubleshooting.md).
+
+        Never paste secrets. Everything in this repository is SOPS-encrypted for a
+        reason.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What is happening
+      description: What you expected, and what happened instead.
+    validations:
+      required: true
+
+  - type: input
+    id: component
+    attributes:
+      label: Component
+      description: Which part. Cilium, Flux, cert-manager, Talos itself, a specific app.
+      placeholder: cert-manager
+    validations:
+      required: true
+
+  - type: textarea
+    id: flux
+    attributes:
+      label: Flux state
+      description: Output of `flux get all --all-namespaces`, trimmed to what is relevant.
+      render: shell
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or events
+      description: >
+        Pod logs, `kubectl describe`, or `talosctl logs` output. Redact anything
+        that looks like a token.
+      render: shell
+
+  - type: dropdown
+    id: reachable
+    attributes:
+      label: Is the node reachable over Tailscale
+      description: >
+        `talosctl` should work even when the cluster does not, because Tailscale runs
+        as a system extension that starts before Kubernetes.
+      options:
+        - "Yes, talosctl works"
+        - "No, the node is unreachable"
+        - "Have not checked"
+    validations:
+      required: true

@@ -1,0 +1,13 @@
+---
+blank_issues_enabled: false
+contact_links:
+  - name: Bootstrap and runbooks
+    url: https://github.com/fobiat/home-ops/tree/main/docs
+    about: How to build this from nothing, restore it, and upgrade it.
+  - name: Why is it built this way
+    url: https://github.com/fobiat/home-ops/tree/main/docs/adr
+    about: Decision records, including the choices that go against the grain.
+  - name: Home Operations Discord
+    url: https://discord.gg/home-operations
+    about: Where the wider community moved after k8s-at-home was archived. Better
+      for general Kubernetes-at-home questions than an issue here.

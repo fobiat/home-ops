@@ -1,0 +1,53 @@
+---
+# Shows what a change would actually do to the cluster before it is merged.
+# Borrowed from carpenike/k8s-gitops.
+name: flux-diff
+on:
+  pull_request:
+    branches: ["main"]
+    paths: ["kubernetes/**"]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  diff:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        resource: ["helmrelease", "kustomization"]
+    steps:
+      - name: Checkout base
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+
+      - name: Checkout head
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: head
+
+      - name: Diff
+        uses: allenporter/flux-local/action/diff@7.7.1
+        id: diff
+        with:
+          sources: flux-system
+          path: base/kubernetes/flux/cluster
+          path-orig: head/kubernetes/flux/cluster
+          resource: ${{ matrix.resource }}
+
+      - name: Comment on the PR
+        if: ${{ steps.diff.outputs.diff != '' }}
+        uses: mshick/add-pr-comment@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          message-id: "${{ github.event.pull_request.number }}/${{ matrix.resource }}"
+          message-failure: Diff failed
+          message: |
+            ```diff
+            ${{ steps.diff.outputs.diff }}
+            ```

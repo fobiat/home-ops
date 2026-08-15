@@ -1,0 +1,7 @@
+---
+# Kustomize's namespace transformer renames this to whatever targetNamespace the
+# including Kustomization sets, so one component covers every app. From buroa/k8s-gitops.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: _

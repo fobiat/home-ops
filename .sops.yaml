@@ -1,0 +1,9 @@
+---
+# The public half of the age key. The private half lives in NordPass and
+# ~/.config/sops/age/keys.txt, and exists nowhere else that matters.
+creation_rules:
+  - path_regex: kubernetes/.*\.sops\.ya?ml
+    encrypted_regex: "^(data|stringData)$"
+    age: "age16p8gv792c4npw2xt3pq8yhu23u47v2sprdatceq779r34nzp24pqrd92vg"
+  - path_regex: talos/.*\.sops\.ya?ml
+    age: "age16p8gv792c4npw2xt3pq8yhu23u47v2sprdatceq779r34nzp24pqrd92vg"

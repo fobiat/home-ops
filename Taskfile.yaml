@@ -1,0 +1,41 @@
+---
+version: "3"
+
+vars:
+  TALOS_DIR: "{{.ROOT_DIR}}/talos"
+  KUBERNETES_DIR: "{{.ROOT_DIR}}/kubernetes"
+
+includes:
+  talos: .taskfiles/talos.yaml
+  flux: .taskfiles/flux.yaml
+  sops: .taskfiles/sops.yaml
+
+tasks:
+  default: task --list
+
+  lint:
+    desc: Run every check CI runs
+    cmds:
+      - task: lint:yaml
+      - task: lint:kubeconform
+      - task: lint:comments
+
+  lint:yaml:
+    desc: yamllint over the tree
+    cmd: yamllint --strict {{.KUBERNETES_DIR}} {{.TALOS_DIR}}
+
+  lint:kubeconform:
+    desc: Validate rendered manifests against Kubernetes schemas
+    cmd: bash {{.ROOT_DIR}}/scripts/kubeconform.sh {{.KUBERNETES_DIR}}
+    preconditions:
+      - sh: test -f {{.ROOT_DIR}}/scripts/kubeconform.sh
+        msg: scripts/kubeconform.sh is missing
+
+  # Rule 2 in AGENTS.md gives a number, so something has to measure it.
+  lint:comments:
+    desc: Fail if comment lines exceed 10 percent of the tree
+    cmd: bash {{.ROOT_DIR}}/scripts/comment-budget.sh
+
+  diff:
+    desc: Show what a change would actually do to the cluster
+    cmd: flux-local diff ks --path {{.KUBERNETES_DIR}}/flux/cluster --all-namespaces
