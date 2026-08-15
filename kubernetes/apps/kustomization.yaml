@@ -9,3 +9,4 @@ resources:
   - ./cert-manager
   - ./network
   - ./reloader
+  - ./local-path-storage
