@@ -1,0 +1,70 @@
+---
+clusterName: home-ops
+talosVersion: ${TALOS_VERSION}
+kubernetesVersion: ${KUBERNETES_VERSION}
+endpoint: https://${NODE_IP}:6443
+allowSchedulingOnControlPlanes: true
+
+additionalApiServerCertSans:
+  - ${NODE_IP}
+additionalMachineCertSans:
+  - ${NODE_IP}
+
+clusterPodNets:
+  - 10.244.0.0/16
+clusterSvcNets:
+  - 10.96.0.0/12
+
+cniConfig:
+  name: none
+
+nodes:
+  - hostname: talos-1
+    ipAddress: ${NODE_IP}
+    controlPlane: true
+    # sda, 100GB. No `serial` field under Hyper-V's storvsc_host transport, so wwid
+    # is the stable identifier instead. Confirmed against the running node with
+    # `talosctl get disks --insecure`, not guessed.
+    installDiskSelector:
+      wwid: naa.60022480303b2e59f14450f1f2403ff6
+    # sdb, 200GB. Mounts at /var/mnt/data per ADR 0004, local-path-provisioner's target.
+    userVolumes:
+      - name: data
+        provisioning:
+          diskSelector:
+            match: disk.wwid == "naa.60022480b9c47ae75685562943176417"
+          minSize: 200GiB
+    # Pinned to the ID in talos/schematic-id.txt rather than re-derived from
+    # talos/schematic.yaml at generate time, so a schematic change can't silently
+    # take effect here before its ID is regenerated and re-committed.
+    patches:
+      - |-
+        machine:
+          install:
+            image: factory.talos.dev/installer/4a0d65c669d46663f377e7161e50cfd570c401f26fd9e7bda34a0216b6f1922b:${TALOS_VERSION}
+    # OAuth client, not a reusable auth key: see docs/bootstrap.md. TS_AUTHKEY comes
+    # from talenv.sops.yaml via envsubst, never appears here in plain text.
+    extensionServices:
+      - name: tailscale
+        environment:
+          - TS_AUTHKEY=${TS_AUTHKEY}
+          - TS_HOSTNAME=talos-1
+          - TS_ROUTES=10.244.0.0/16,10.96.0.0/12
+          - TS_EXTRA_ARGS=--advertise-tags=tag:k8s --accept-routes
+
+controlPlane:
+  patches:
+    # Cilium replaces both. See ADR 0002.
+    - |-
+      cluster:
+        proxy:
+          disabled: true
+    # Otherwise both bind to localhost and Prometheus cannot scrape them.
+    - |-
+      cluster:
+        controllerManager:
+          extraArgs:
+            bind-address: 0.0.0.0
+        scheduler:
+          extraArgs:
+            bind-address: 0.0.0.0

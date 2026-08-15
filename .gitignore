@@ -13,6 +13,8 @@ roadmap.md
 kubeconfig
 talosconfig
 !talos/talconfig.yaml
+# talhelper's own default output name, before it gets encrypted in place
+talos/talsecret.yaml
 
 # Generated Talos output
 talos/clusterconfig/

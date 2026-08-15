@@ -1,0 +1,51 @@
+---
+version: "3"
+
+vars:
+  TALOS_DIR: "{{.ROOT_DIR}}/talos"
+  NODE_IP:
+    sh: yq '.NODE_IP' "{{.ROOT_DIR}}/talos/talenv.yaml"
+
+tasks:
+  generate:
+    desc: Render the Talos machine config from talconfig.yaml
+    dir: "{{.TALOS_DIR}}"
+    cmd: talhelper genconfig
+    preconditions:
+      - sh: test -f talconfig.yaml
+        msg: talos/talconfig.yaml is missing
+      - sh: test -f talenv.sops.yaml
+        msg: >-
+          talos/talenv.sops.yaml is missing. It holds TS_AUTHKEY and
+          CLOUDFLARE_API_TOKEN, see docs/bootstrap.md
+
+  apply:
+    desc: Apply the generated config. Only works while the node is in maintenance mode
+    dir: "{{.TALOS_DIR}}"
+    cmd: >-
+      talosctl apply-config --insecure --nodes {{.NODE_IP}}
+      --file clusterconfig/home-ops-talos-1.yaml
+    preconditions:
+      - sh: test -f clusterconfig/home-ops-talos-1.yaml
+        msg: "Nothing generated yet. Run: task talos:generate"
+
+  bootstrap:
+    desc: Bootstrap etcd. Runs once, ever
+    dir: "{{.TALOS_DIR}}"
+    prompt: >-
+      This runs once, ever. Running it again against a live cluster creates a new
+      empty etcd and discards everything. Continue?
+    cmd: >-
+      talosctl bootstrap --nodes {{.NODE_IP}}
+      --talosconfig clusterconfig/talosconfig
+
+  kubeconfig:
+    desc: Pull kubeconfig from the node
+    dir: "{{.TALOS_DIR}}"
+    cmd: >-
+      talosctl kubeconfig --nodes {{.NODE_IP}}
+      --talosconfig clusterconfig/talosconfig {{.ROOT_DIR}}
+
+  test:
+    desc: Throwaway Talos-in-Docker cluster, so manifests are never debugged on the real node
+    cmd: talosctl cluster create --provisioner docker --name home-ops-test
