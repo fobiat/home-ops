@@ -1,0 +1,40 @@
+---
+# Applies area labels to a PR based on what it touches.
+area/talos:
+  - changed-files:
+      - any-glob-to-any-file: ["talos/**", "bootstrap/**"]
+
+area/flux:
+  - changed-files:
+      - any-glob-to-any-file: ["kubernetes/flux/**", "kubernetes/components/**"]
+
+area/network:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "kubernetes/apps/network/**"
+          - "kubernetes/apps/cert-manager/**"
+          - "kubernetes/apps/kube-system/cilium*/**"
+
+area/storage:
+  - changed-files:
+      - any-glob-to-any-file: ["kubernetes/apps/storage/**", "kubernetes/apps/volsync/**"]
+
+area/observability:
+  - changed-files:
+      - any-glob-to-any-file: ["kubernetes/apps/observability/**"]
+
+area/apps:
+  - changed-files:
+      - any-glob-to-any-file: ["kubernetes/apps/**"]
+      - all-globs-to-all-files:
+          - "!kubernetes/apps/network/**"
+          - "!kubernetes/apps/observability/**"
+          - "!kubernetes/apps/storage/**"
+
+area/ci:
+  - changed-files:
+      - any-glob-to-any-file: [".github/**", "scripts/**", "Taskfile.yaml", ".mise.toml"]
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file: ["docs/**", "*.md"]

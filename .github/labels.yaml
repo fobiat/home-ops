@@ -1,0 +1,41 @@
+---
+# Labels as code. GitHub's baseline set (bug, enhancement, documentation and so on)
+# is left alone; these are the ones specific to this cluster.
+
+- name: area/talos
+  color: "1d76db"
+  description: The node itself, machine config, system extensions, upgrades
+- name: area/flux
+  color: "1d76db"
+  description: GitOps reconciliation, Kustomizations, HelmReleases
+- name: area/network
+  color: "1d76db"
+  description: Cilium, Gateway API, DNS, certificates, Tailscale, tunnels
+- name: area/storage
+  color: "1d76db"
+  description: Volumes, storage classes, backups
+- name: area/observability
+  color: "1d76db"
+  description: Prometheus, Grafana, alerting, dashboards
+- name: area/ci
+  color: "1d76db"
+  description: Workflows, linting, the gate
+- name: area/apps
+  color: "1d76db"
+  description: Workloads rather than platform
+
+- name: upgrade/outage
+  color: "b60205"
+  description: Landing this takes the cluster down. One node, nowhere to drain to
+- name: needs/backup-first
+  color: "d93f0b"
+  description: Do not land this until the affected volumes are backed up
+- name: untested-runbook
+  color: "fbca04"
+  description: A runbook that has not been walked yet, per AGENTS.md rule 9
+- name: renovate
+  color: "e99695"
+  description: Raised by Renovate
+- name: ci-failure
+  color: "b60205"
+  description: Opened automatically when CI fails on main

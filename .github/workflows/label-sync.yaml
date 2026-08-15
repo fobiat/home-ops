@@ -1,0 +1,26 @@
+---
+# Labels are defined in .github/labels.yaml and pushed to GitHub from there, so the
+# label set is reviewable in a diff rather than clicked into a settings page.
+name: label-sync
+on:
+  push:
+    branches: ["main"]
+    paths: [".github/labels.yaml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # skip-delete keeps GitHub's baseline labels, which are not in labels.yaml.
+      - uses: EndBug/label-sync@v2
+        with:
+          config-file: .github/labels.yaml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          delete-other-labels: false
