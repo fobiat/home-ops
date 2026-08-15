@@ -150,6 +150,8 @@ Write-Ok "Created '$VMName': $CpuCount vCPU, ${MemoryGB}GB fixed, ${BootDiskGB}G
 Write-Step "Starting it"
 Start-VM -Name $VMName
 Write-Note "Waiting for an address. Talos boots into maintenance mode with no disk install."
+Write-Note "Talos doesn't run the Hyper-V KVP daemon, so this almost always times out below."
+Write-Note "That's expected, not a fault. See the fallback instructions once it does."
 
 $ip = $null
 foreach ($i in 1..40) {
@@ -184,8 +186,11 @@ else {
     Write-Host "    No address reported yet." -ForegroundColor Yellow
     Write-Host @"
 
-That is not necessarily wrong. Hyper-V learns guest addresses through integration
-services, and Talos may not report one. Check instead by either:
+This is a known false negative, not a sign anything went wrong. Hyper-V learns guest
+addresses through integration services (KVP), and Talos doesn't run that daemon, so
+this branch fires on effectively every boot regardless of whether the VM is healthy.
+Confirmed 2026-08-15: a VM that hit this exact message was reachable over the LAN and
+answering talosctl within a minute of boot. Check the real address by either:
 
   - Opening the console:  vmconnect.exe localhost $VMName
     Talos prints its address on the boot screen.
