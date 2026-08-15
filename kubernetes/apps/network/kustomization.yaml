@@ -5,3 +5,4 @@ resources:
   - ./certificates/ks.yaml
   - ./lb-ipam/ks.yaml
   - ./gateway/ks.yaml
+  - ./external-dns/ks.yaml
