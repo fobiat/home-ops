@@ -1,0 +1,6 @@
+---
+version: "3"
+
+# Empty on purpose. `flux bootstrap github` needs a GitHub token and comes after
+# Cilium in the phase one order (docs/bootstrap.md step 5) - not written yet.
+tasks: {}

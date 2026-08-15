@@ -1,0 +1,6 @@
+# Non-secret values talconfig.yaml pulls in with ${VAR} substitution.
+# Secrets (TS_AUTHKEY, CLOUDFLARE_API_TOKEN) live in talenv.sops.yaml instead,
+# never here. talhelper reads both before running envsubst.
+TALOS_VERSION: v1.13.8
+KUBERNETES_VERSION: v1.36.3
+NODE_IP: 192.168.0.226

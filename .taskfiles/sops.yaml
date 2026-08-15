@@ -1,0 +1,11 @@
+---
+version: "3"
+
+tasks:
+  encrypt:
+    desc: "Encrypt a file in place. Usage: task sops:encrypt -- path/to/file.sops.yaml"
+    cmd: sops --encrypt --in-place {{.CLI_ARGS}}
+
+  decrypt:
+    desc: "Decrypt a file to stdout, never in place. Usage: task sops:decrypt -- path/to/file.sops.yaml"
+    cmd: sops --decrypt {{.CLI_ARGS}}
