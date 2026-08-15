@@ -1,0 +1,9 @@
+---
+# Lists only ks.yaml files (never app/ directories), so cluster-apps applies just the
+# wrapper Kustomization objects and lets each one reconcile, dry-run and dependsOn its
+# own content independently. Otherwise cluster-apps's own dry-run trips over resources
+# whose CRDs a same-batch app (like cert-manager) hasn't installed yet.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./cert-manager
