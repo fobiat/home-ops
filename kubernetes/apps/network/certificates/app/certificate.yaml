@@ -6,7 +6,7 @@ metadata:
 spec:
   secretName: wildcard-lab-fobiat-dev-tls
   issuerRef:
-    name: letsencrypt-staging
+    name: letsencrypt-production
     kind: ClusterIssuer
   dnsNames:
     - "*.lab.fobiat.dev"
