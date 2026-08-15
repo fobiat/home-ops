@@ -1,0 +1,51 @@
+---
+name: lint
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: jdx/mise-action@v3
+        with:
+          install: true
+          cache: true
+
+      - name: yamllint
+        run: yamllint --strict kubernetes talos .github
+
+      - name: Comment budget
+        run: bash scripts/comment-budget.sh
+
+  notify-discord:
+    runs-on: ubuntu-latest
+    needs: [lint]
+    if: always()
+    steps:
+      - name: Post result
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          RESULT: ${{ needs.lint.result }}
+        run: |
+          [[ -z "${WEBHOOK}" ]] && { echo "no webhook configured, skipping"; exit 0; }
+          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          if [[ "${RESULT}" == "success" ]]; then
+            colour=3066993; status="passed"
+          else
+            colour=15158332; status="${RESULT}"
+          fi
+          payload=$(jq -n \
+            --arg t "lint ${status}" \
+            --arg d "[\`${GITHUB_REF_NAME}\`](${RUN_URL}) on ${GITHUB_REPOSITORY}" \
+            --argjson c "${colour}" \
+            '{embeds: [{title: $t, description: $d, color: $c}]}')
+          curl -sS -H "Content-Type: application/json" -d "${payload}" "${WEBHOOK}" >/dev/null

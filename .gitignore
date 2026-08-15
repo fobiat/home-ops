@@ -1,1 +1,29 @@
+# Assistant artifacts. Real copies live in claude-configs.
+AGENTS.md
+CLAUDE.md
+tasks.md
+handoverdaily.md
+roadmap.md
+.claude/
+
+# Anything decrypted, ever. The .sops.yaml creation rules mean an encrypted
+# file is named *.sops.yaml, so a bare secret.yaml is always a mistake.
+*.decrypted.yaml
+*.plain.yaml
+kubeconfig
+talosconfig
+!talos/talconfig.yaml
+
+# Generated Talos output
+talos/clusterconfig/
+
+# Tooling
+.venv/
+.direnv/
+.task/
+site/
+node_modules/
+
+# OS noise
 .DS_Store
+Thumbs.db

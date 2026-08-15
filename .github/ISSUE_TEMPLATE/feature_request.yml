@@ -1,0 +1,62 @@
+---
+name: Add or change something
+description: A new workload, or a change to how the cluster is put together
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Two rules worth knowing before proposing something. This runs on four cores, so
+        a new component needs a reason beyond being interesting. And there should be one
+        way to do each thing, so a second Gateway implementation or a second secrets
+        mechanism needs a decision record rather than an issue.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What, and why
+      description: What should exist, and what problem it actually solves.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of change
+      options:
+        - New application
+        - Platform component (networking, storage, observability)
+        - Talos or node configuration
+        - Documentation
+        - CI or tooling
+    validations:
+      required: true
+
+  - type: dropdown
+    id: exposure
+    attributes:
+      label: How should it be reached
+      description: >
+        The default is private. Public exposure is always an explicit, documented
+        decision.
+      options:
+        - Tailscale and LAN only (default)
+        - Public, through a Cloudflare Tunnel
+        - Not reachable, runs in the background
+    validations:
+      required: true
+
+  - type: textarea
+    id: resources
+    attributes:
+      label: Resource cost
+      description: >
+        Rough CPU and memory. Four cores total, with roughly 6 to 8GB already committed
+        to the platform layer.
+
+  - type: textarea
+    id: state
+    attributes:
+      label: Does it hold state
+      description: >
+        If it needs a volume, it needs a backup policy declared next to its manifest.

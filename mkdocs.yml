@@ -1,0 +1,52 @@
+---
+site_name: home-ops
+site_description: Single-node Kubernetes homelab running Talos and Flux
+site_url: https://fobiat.github.io/home-ops/
+repo_url: https://github.com/fobiat/home-ops
+repo_name: fobiat/home-ops
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Light mode
+  features:
+    - content.code.copy
+    - navigation.instant
+    - navigation.sections
+    - navigation.top
+    - search.highlight
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - pymdownx.details
+  - pymdownx.superfences
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Bootstrap: bootstrap.md
+  - Runbooks:
+      - Restore: runbooks/restore.md
+      - Upgrade: runbooks/upgrade.md
+      - Troubleshooting: runbooks/troubleshooting.md
+  - Decisions:
+      - Overview: adr/README.md
+      - 0001 Talos over k3s: adr/0001-talos-over-k3s.md
+      - 0002 Cilium Gateway API: adr/0002-cilium-gateway-api.md
+      - 0003 SOPS over External Secrets: adr/0003-sops-age-over-external-secrets.md
+      - 0004 local-path storage: adr/0004-local-path-storage.md
+      - 0005 One node: adr/0005-single-node.md
+      - 0006 Repository lineage: adr/0006-repository-lineage.md
