@@ -1,0 +1,13 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-lab-fobiat-dev
+spec:
+  secretName: wildcard-lab-fobiat-dev-tls
+  issuerRef:
+    name: letsencrypt-staging
+    kind: ClusterIssuer
+  dnsNames:
+    - "*.lab.fobiat.dev"
+    - lab.fobiat.dev
