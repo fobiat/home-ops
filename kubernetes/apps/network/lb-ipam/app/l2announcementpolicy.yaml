@@ -6,3 +6,9 @@ metadata:
 spec:
   externalIPs: true
   loadBalancerIPs: true
+  # Cilium picks tailscale0 as its direct-routing-device over the physical NIC
+  # (left alone, that's what keeps the Tailscale path working). Scope ARP
+  # answers to the LAN NIC explicitly instead. Hyper-V's external switch
+  # names it enx<mac>.
+  interfaces:
+    - ^enx.*
