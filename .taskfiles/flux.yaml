@@ -1,6 +1,19 @@
 ---
 version: "3"
 
-# Empty on purpose. `flux bootstrap github` needs a GitHub token and comes after
-# Cilium in the phase one order (docs/bootstrap.md step 5) - not written yet.
-tasks: {}
+tasks:
+  bootstrap:
+    desc: Bootstrap Flux against fobiat/home-ops, pushes directly to main
+    cmd: >-
+      flux bootstrap github --owner=fobiat --repository=home-ops
+      --branch=main --path=kubernetes/flux/cluster --personal
+    preconditions:
+      - sh: "[ -n \"$GITHUB_TOKEN\" ]"
+        msg: "GITHUB_TOKEN isn't set. Run: export GITHUB_TOKEN=$(gh auth token)"
+
+  sops-secret:
+    desc: Create the flux-system age key Secret so Flux can decrypt SOPS resources
+    cmd: >-
+      kubectl create secret generic sops-age --namespace=flux-system
+      --from-file=age.agekey="$SOPS_AGE_KEY_FILE"
+      --dry-run=client -o yaml | kubectl apply -f -

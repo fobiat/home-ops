@@ -158,10 +158,26 @@ order is fixed.
 
 ```sh
 task bootstrap:cilium   # helmfile, with the Talos-specific settings
-task bootstrap:flux     # flux bootstrap, with SOPS decryption configured
+
+export GITHUB_TOKEN=$(gh auth token)
+task flux:bootstrap     # pushes flux-system manifests straight to main
+task flux:sops-secret   # the age key as a Secret, so Flux can decrypt SOPS resources
 ```
 
 Once Flux is running it owns everything else, including Cilium's ongoing upgrades.
+
+Two things about this step that look like they break the project's own rules, and don't:
+
+- `flux bootstrap` commits and pushes to `main` directly, no PR. Rule 6 (anything
+  touching the cluster goes through a PR) doesn't apply here because Flux can't
+  reconcile a PR before it exists to reconcile anything. This is the one bootstrap-only
+  exception.
+- The `sops-age` Secret is created with a bare `kubectl apply`, not through Flux. Rule 4
+  (if it's not in Git, it doesn't exist) doesn't apply here either: the age private key
+  is deliberately never committed anywhere (it lives in `~/.config/sops/age/keys.txt`
+  and NordPass only), so the Secret that carries it can't be GitOps-managed without
+  defeating the point of keeping it out of Git. This is the other bootstrap-only
+  exception, and the only Secret in the cluster that's allowed to exist this way.
 
 ## 6. Watch it converge
 
