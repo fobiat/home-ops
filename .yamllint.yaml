@@ -19,3 +19,5 @@ ignore: |
   .archive/
   kubernetes/**/*.sops.yaml
   talos/**/*.sops.yaml
+  # flux bootstrap regenerates this, never hand-edited
+  **/gotk-components.yaml
