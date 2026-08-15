@@ -40,4 +40,6 @@ tasks:
 
   diff:
     desc: Show what a change would actually do to the cluster
-    cmd: flux-local diff ks --path {{.KUBERNETES_DIR}}/flux/cluster --all-namespaces
+    cmd: >-
+      flux-local diff ks --path {{.KUBERNETES_DIR}}/flux/cluster --all-namespaces
+      --branch-orig origin/main
