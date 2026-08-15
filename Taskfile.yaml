@@ -4,11 +4,13 @@ version: "3"
 vars:
   TALOS_DIR: "{{.ROOT_DIR}}/talos"
   KUBERNETES_DIR: "{{.ROOT_DIR}}/kubernetes"
+  BOOTSTRAP_DIR: "{{.ROOT_DIR}}/bootstrap"
 
 includes:
   talos: .taskfiles/talos.yaml
   flux: .taskfiles/flux.yaml
   sops: .taskfiles/sops.yaml
+  bootstrap: .taskfiles/bootstrap.yaml
 
 tasks:
   default: task --list
@@ -22,7 +24,7 @@ tasks:
 
   lint:yaml:
     desc: yamllint over the tree
-    cmd: yamllint --strict {{.KUBERNETES_DIR}} {{.TALOS_DIR}}
+    cmd: yamllint --strict {{.KUBERNETES_DIR}} {{.TALOS_DIR}} {{.BOOTSTRAP_DIR}}
 
   lint:kubeconform:
     desc: Validate rendered manifests against Kubernetes schemas

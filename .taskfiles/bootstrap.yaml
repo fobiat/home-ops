@@ -1,0 +1,11 @@
+---
+version: "3"
+
+tasks:
+  cilium:
+    desc: Install or upgrade Cilium with helmfile
+    dir: "{{.ROOT_DIR}}/bootstrap"
+    cmd: helmfile apply --suppress-secrets
+    preconditions:
+      - sh: test -f "$HOME/.kube/config"
+        msg: "No kubeconfig found. Run: task talos:kubeconfig"

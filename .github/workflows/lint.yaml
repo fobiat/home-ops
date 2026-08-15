@@ -21,7 +21,7 @@ jobs:
           cache: true
 
       - name: yamllint
-        run: yamllint --strict kubernetes talos .github
+        run: yamllint --strict kubernetes talos bootstrap .github
 
       - name: Comment budget
         run: bash scripts/comment-budget.sh

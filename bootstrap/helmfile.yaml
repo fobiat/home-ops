@@ -1,0 +1,66 @@
+---
+repositories:
+  - name: cilium
+    url: https://helm.cilium.io/
+
+releases:
+  - name: cilium
+    namespace: kube-system
+    chart: cilium/cilium
+    version: 1.20.0
+    # Gateway API's CRDs aren't bundled in the chart. Standard channel only,
+    # GRPCRoute and BackendTLSPolicy are both GA there since v1.4.0 (ADR 0002).
+    hooks:
+      - events: ["presync"]
+        showlogs: true
+        command: kubectl
+        args:
+          - apply
+          - --server-side
+          - -f
+          - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.1/standard-install.yaml
+    values:
+      - ipam:
+          mode: kubernetes
+        # KubePrism, not the real API address. See AGENTS.md traps.
+        kubeProxyReplacement: true
+        k8sServiceHost: localhost
+        k8sServicePort: 7445
+        # Talos-specific: it manages cgroups itself.
+        cgroup:
+          autoMount:
+            enabled: false
+          hostRoot: /sys/fs/cgroup
+        # The chart's default list includes SYS_MODULE. This one doesn't.
+        securityContext:
+          capabilities:
+            ciliumAgent:
+              - CHOWN
+              - KILL
+              - NET_ADMIN
+              - NET_RAW
+              - IPC_LOCK
+              - SYS_ADMIN
+              - SYS_RESOURCE
+              - DAC_OVERRIDE
+              - FOWNER
+              - SETGID
+              - SETUID
+            cleanCiliumState:
+              - NET_ADMIN
+              - SYS_ADMIN
+              - SYS_RESOURCE
+        # Talos defaults machine.features.hostDNS.forwardKubeDNSToHost to true
+        # (not a Cilium setting, nothing to mirror here). Combined with
+        # bpf.masquerade: true that breaks CoreDNS, so this stays false.
+        # See AGENTS.md traps.
+        bpf:
+          masquerade: false
+        # Default is 2 replicas with required anti-affinity, which sits Pending
+        # forever on one node. See ADR 0005.
+        operator:
+          replicas: 1
+        gatewayAPI:
+          enabled: true
+          enableAlpn: true
+          enableAppProtocol: true
