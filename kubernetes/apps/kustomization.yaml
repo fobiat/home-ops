@@ -14,3 +14,4 @@ resources:
   - ./system-backup
   - ./default
   - ./kube-tools
+  - ./system-upgrade
