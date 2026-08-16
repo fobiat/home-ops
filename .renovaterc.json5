@@ -13,8 +13,9 @@
   ignorePaths: [".archive/**"],
   packageRules: [
     {
-      description: "Talos and Kubernetes are deliberate, manual upgrades. Every one is an outage on a single node.",
-      matchPackageNames: ["siderolabs/talos", "ghcr.io/siderolabs/installer"],
+      description: "Talos and Kubernetes are deliberate, manual upgrades. Every one is an outage on a single node. talosctl is grouped in here too: it has to match the node's Talos version exactly (see ADR 0009), never bump on its own.",
+      matchPackageNames: ["siderolabs/talos", "ghcr.io/siderolabs/installer", "ghcr.io/siderolabs/talosctl"],
+      groupName: "talos",
       automerge: false,
       addLabels: ["upgrade/outage"],
     },

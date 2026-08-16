@@ -1,0 +1,37 @@
+# NOT ENCRYPTED. NOT A REAL SECRET. DO NOT APPLY TO THE CLUSTER.
+#
+# The machineconfig-backup CronJob has to read the MachineConfigs resource, and
+# Talos has no scoped role for that: os:reader explicitly excludes it (it can
+# carry secrets), and os:operator only adds reboot, shutdown, etcd backup and
+# etcd alarm management on top of os:reader. os:admin is the only role left, so
+# this credential can also reboot the node, wipe disks and read every secret
+# Talos holds, not just export config. Give it its own certificate and its own
+# Secret; never point it at the etcd job's. See ADR 0009.
+#
+# 1. From the repo root, with the real admin talosconfig active:
+#      mise exec -- talosctl config new \
+#        /tmp/talos-machineconfig-backup.talosconfig \
+#        --roles os:admin \
+#        --crt-ttl 8760h \
+#        -e 192.168.0.226 -n 192.168.0.226
+# 2. Paste the full contents of /tmp/talos-machineconfig-backup.talosconfig into
+#    stringData.talosconfig below, replacing the placeholder line.
+# 3. Rename this file to talos-machineconfig-backup.sops.yaml.
+# 4. Encrypt it in place:
+#      mise exec -- sops --encrypt --in-place \
+#        kubernetes/apps/system-backup/cluster-backup/app/talos-machineconfig-backup.sops.yaml
+# 5. Add it to kustomization.yaml's resources list.
+# 6. Set spec.suspend to false in cronjob-machineconfig.yaml.
+# 7. Delete /tmp/talos-machineconfig-backup.talosconfig and this placeholder file.
+#
+# The certificate expires after the --crt-ttl above (1 year). Nothing renews it
+# automatically; repeat this whole procedure to rotate it.
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: talos-machineconfig-backup
+type: Opaque
+stringData:
+  talosconfig: |
+    REPLACE_WITH_TALOSCTL_CONFIG_NEW_OUTPUT

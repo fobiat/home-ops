@@ -1,0 +1,90 @@
+---
+# Suspended until talos-etcd-backup.PLACEHOLDER.yaml has been turned into a real
+# secret. See that file and ADR 0009.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: etcd-snapshot
+spec:
+  schedule: "15 3 * * *"
+  timeZone: Europe/London
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 300
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  suspend: true
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: etcd-snapshot
+        spec:
+          restartPolicy: OnFailure
+          # talosctl's image is FROM scratch (binary + CA certs, no shell), but
+          # `etcd snapshot <path>` writes straight to a path, so it needs nothing else.
+          initContainers:
+            - name: snapshot
+              image: ghcr.io/siderolabs/talosctl:v1.13.8
+              args:
+                - etcd
+                - snapshot
+                - /staging/etcd.snapshot
+                - --talosconfig=/var/run/secrets/talos/talosconfig
+              volumeMounts:
+                - name: staging
+                  mountPath: /staging
+                - name: talos-credentials
+                  mountPath: /var/run/secrets/talos
+                  readOnly: true
+              resources:
+                requests:
+                  cpu: 25m
+                  memory: 64Mi
+                limits:
+                  memory: 256Mi
+          containers:
+            # A failed snapshot never reaches this container: Kubernetes only runs the
+            # pod's containers once every init container has exited zero.
+            - name: finalize
+              image: docker.io/library/busybox:1.37.0
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -eu
+                  test -s /staging/etcd.snapshot
+                  size=$(wc -c < /staging/etcd.snapshot)
+                  # bbolt databases are always a whole number of 4096-byte pages; this
+                  # will not catch corruption, but it catches a truncated stream.
+                  [ $((size % 4096)) -eq 0 ]
+                  mkdir -p /backup/etcd
+                  dest="/backup/etcd/etcd-$(date -u +%Y%m%dT%H%M%SZ).snapshot"
+                  mv /staging/etcd.snapshot "$dest"
+                  echo "wrote $dest ($size bytes)"
+                  cd /backup/etcd
+                  ls -1t etcd-*.snapshot | tail -n "+$((RETAIN + 1))" | xargs -r rm -f --
+              env:
+                - name: RETAIN
+                  value: "14"
+              volumeMounts:
+                - name: staging
+                  mountPath: /staging
+                - name: backup-data
+                  mountPath: /backup
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  memory: 64Mi
+          volumes:
+            - name: staging
+              emptyDir: {}
+            - name: talos-credentials
+              secret:
+                secretName: talos-etcd-backup
+            - name: backup-data
+              persistentVolumeClaim:
+                claimName: cluster-backup-data

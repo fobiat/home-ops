@@ -22,7 +22,9 @@ stop and find them first.
 An etcd snapshot is **not** in that list, deliberately. On a single node
 `talosctl bootstrap --recover-from` assumes a surviving node to recover onto, which by
 definition does not exist in this scenario. Snapshots cover etcd corruption on a machine
-that is otherwise fine. They do not cover a dead disk.
+that is otherwise fine. They do not cover a dead disk. If etcd is corrupted but the node
+and its disks are not, see [Etcd snapshot restore](etcd-restore.md) instead: that
+scenario has a real recovery path and this one does not need it.
 
 ## Order
 
