@@ -7,8 +7,9 @@ If you are looking for something specific:
 - **Setting this up from nothing**: [Bootstrap](bootstrap.md)
 - **Adding an app to the dashboard**: [Homepage](homepage.md)
 - **Adding a health check for an app**: [Gatus](gatus.md)
+- **What's actually backed up**: [Cluster backup](cluster-backup.md)
 - **The disk died**: [Restore](runbooks/restore.md)
-- **Upgrading Talos or Kubernetes**: [Upgrade](runbooks/upgrade.md) ([or via tuppr](runbooks/tuppr-upgrade.md))
+- **Upgrading Talos or Kubernetes**: [Upgrade](runbooks/upgrade.md) (or via [tuppr](tuppr.md))
 - **Something is broken**: [Troubleshooting](runbooks/troubleshooting.md)
 - **Why is it like this**: [Decision records](adr/README.md)
 
@@ -33,5 +34,6 @@ second copy of anything running. The [single node decision record](adr/0005-sing
 lists exactly what that costs and what is deliberately not attempted because of it.
 
 Backups currently go to a second disk in the same machine, which protects against
-deleting a volume and against nothing else. Offsite is planned and is a prerequisite for
-the hardware upgrade.
+deleting a volume and against nothing else. See [Cluster backup](cluster-backup.md) for
+what's actually covered. Offsite is planned and is a prerequisite for the hardware
+upgrade.
