@@ -1,0 +1,42 @@
+---
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: grafana
+spec:
+  sourcePVC: storage-kube-prometheus-stack-grafana-0
+  trigger:
+    # UTC, 20 minutes after Gatus. See gatus/app/replicationsource.yaml for why
+    # VolSync's cronspecs are pinned to UTC rather than following the
+    # system-backup CronJobs' Europe/London.
+    schedule: "20 4 * * *"
+  restic:
+    repository: grafana-restic
+    # local-path is not a CSI driver, so Snapshot and Clone do not exist here.
+    copyMethod: Direct
+    pruneIntervalDays: 14
+    retain:
+      daily: 7
+      weekly: 5
+      monthly: 6
+    cacheCapacity: 1Gi
+    # Talos assigns no UID ranges, so an unadorned mover runs as UID 0 without
+    # DAC_OVERRIDE and cannot read Grafana's 472-owned files. Copied from the
+    # running pod's own securityContext, not from chart defaults.
+    moverSecurityContext:
+      runAsUser: 472
+      runAsGroup: 472
+      fsGroup: 472
+    # Requests keep the mover Burstable; Talos SIGKILLs BestEffort cgroups first
+    # and a silently killed mover is a silently stopped backup. Immutable field.
+    moverResources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1Gi
+    moverVolumes:
+      - mountPath: repo
+        volumeSource:
+          persistentVolumeClaim:
+            claimName: volsync-repo

@@ -1,0 +1,29 @@
+---
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationDestination
+metadata:
+  name: cluster-backup-restore
+spec:
+  trigger:
+    # Bumped to a new value on every restore. An unchanged value against a
+    # matching status.lastManualSync is what makes an armed RD inert.
+    manual: never-run
+  restic:
+    repository: cluster-backup-restic
+    destinationPVC: cluster-backup-data
+    copyMethod: Direct
+    cacheCapacity: 1Gi
+    # Additive by default. Set true only when restoring over a volume that has
+    # been partially repopulated and the backup should win outright.
+    enableFileDeletion: false
+    moverResources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1Gi
+    moverVolumes:
+      - mountPath: repo
+        volumeSource:
+          persistentVolumeClaim:
+            claimName: volsync-repo

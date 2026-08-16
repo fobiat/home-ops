@@ -8,7 +8,8 @@ metadata:
   name: machineconfig-backup
 spec:
   schedule: "30 3 * * *"
-  timeZone: Europe/London
+  # UTC rather than Europe/London: see cronjob-etcd-snapshot.yaml.
+  timeZone: Etc/UTC
   concurrencyPolicy: Forbid
   startingDeadlineSeconds: 300
   successfulJobsHistoryLimit: 3

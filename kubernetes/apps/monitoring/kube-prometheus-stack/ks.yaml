@@ -8,6 +8,7 @@ spec:
   targetNamespace: monitoring
   dependsOn:
     - name: local-path-provisioner
+    - name: volsync
   commonMetadata:
     labels:
       app.kubernetes.io/name: kube-prometheus-stack
