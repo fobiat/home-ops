@@ -46,6 +46,11 @@ spec:
           l.allowedRoutes.namespaces.from == 'Same')
       message: "the external Gateway may only accept routes from its own namespace"
       reason: Forbidden
+    - expression: >-
+        object.metadata.name != 'external' ||
+        !has(object.spec.allowedListeners)
+      message: "the external Gateway may not delegate listeners to a ListenerSet"
+      reason: Forbidden
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingAdmissionPolicyBinding
