@@ -21,6 +21,7 @@ talos/clusterconfig/
 
 # Tooling
 .venv/
+.venv-docs/
 .direnv/
 .task/
 site/

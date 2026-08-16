@@ -1,0 +1,27 @@
+---
+version: "3"
+
+vars:
+  VENV: "{{.ROOT_DIR}}/.venv-docs"
+
+tasks:
+  # mkdocs-material ships no console script of its own, so it can't be a
+  # standalone pipx/uv tool (uv tool install refuses a package with no
+  # entry points, and mise's pipx backend silently drops --with when it
+  # falls back to real pipx instead of uv, which happens in CI but not
+  # locally). A plain venv sidesteps both.
+  _venv:
+    internal: true
+    cmds:
+      - test -d {{.VENV}} || python3 -m venv {{.VENV}}
+      - "{{.VENV}}/bin/pip install --quiet -r {{.ROOT_DIR}}/requirements-docs.txt"
+
+  build:
+    desc: Build the MkDocs site into site/, failing on any broken link
+    deps: [_venv]
+    cmd: "{{.VENV}}/bin/mkdocs build --strict"
+
+  serve:
+    desc: Serve the MkDocs site locally with live reload
+    deps: [_venv]
+    cmd: "{{.VENV}}/bin/mkdocs serve"
