@@ -1,0 +1,5 @@
+---
+# Metadata only, see node-exporter-full.grafanadashboard.yaml for why this
+# file exists.
+dashboard: cert-manager
+source: https://grafana.com/api/dashboards/20340/revisions/1/download

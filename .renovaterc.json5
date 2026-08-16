@@ -6,6 +6,7 @@
     ":semanticCommits",
     "github>home-operations/renovate-presets//custom-managers/mise.json5",
     "github>home-operations/renovate-presets//apps/talosFactory.json5",
+    "github>home-operations/renovate-presets//apps/grafanaDashboards.json5",
   ],
   timezone: "Europe/London",
   schedule: ["* 0-6 * * 1"],

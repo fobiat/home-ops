@@ -1,0 +1,8 @@
+---
+# Metadata only, not a Kubernetes resource and not referenced by
+# kustomization.yaml. Lets Renovate's grafanaDashboards preset flag a new
+# grafana.com revision; re-fetch with the download URL below and overwrite
+# node-exporter-full.json by hand, the dashboard JSON has to stay hand-fetched
+# since Renovate only bumps the number here.
+dashboard: Node Exporter Full
+source: https://grafana.com/api/dashboards/1860/revisions/45/download
