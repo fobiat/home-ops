@@ -10,3 +10,4 @@ resources:
   - ./network
   - ./reloader
   - ./local-path-storage
+  - ./monitoring
