@@ -59,6 +59,10 @@ spec:
             style: row
             columns: 2
       bookmarks: []
+      # Empty, not absent: with no services key at all the chart ships its own
+      # sample services.yaml, and Homepage renders the three "My First Service"
+      # demo entries alongside the discovered ones.
+      services: []
       # Services come from gethomepage.dev/* annotations on each app's own
       # HTTPRoute (see e.g. grafana's), not a static list, so a new app shows
       # up without a Homepage edit. The old static list carried a dead
