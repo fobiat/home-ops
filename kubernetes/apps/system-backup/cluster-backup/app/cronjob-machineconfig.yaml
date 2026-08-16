@@ -27,9 +27,12 @@ spec:
             # `talosctl get` only ever writes to stdout, and the talosctl image has no
             # shell to redirect it with. This container copies a static busybox binary
             # onto a shared volume so the next one can exec a real shell from inside its
-            # own otherwise shell-less filesystem.
+            # own otherwise shell-less filesystem. Must be the -musl tag: the plain tag
+            # is glibc-dynamic and fails with "no such file or directory" (missing
+            # interpreter, not a missing file) when exec'd inside the scratch-based
+            # talosctl image, which has no dynamic linker at all.
             - name: shell
-              image: docker.io/library/busybox:1.37.0
+              image: docker.io/library/busybox:1.37.0-musl
               command:
                 - /bin/sh
                 - -c
@@ -53,6 +56,7 @@ spec:
                 - >-
                   /talosctl get mc v1alpha1 -o yaml
                   --talosconfig=/var/run/secrets/talos/talosconfig
+                  --nodes 192.168.0.226
                   > /staging/machineconfig.yaml
               volumeMounts:
                 - name: shell-bin
