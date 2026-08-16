@@ -42,6 +42,8 @@ nav:
   - Headlamp access: headlamp.md
   - Grafana dashboards: monitoring-dashboards.md
   - Gatus: gatus.md
+  - Cluster backup: cluster-backup.md
+  - tuppr: tuppr.md
   - Runbooks:
       - Restore: runbooks/restore.md
       - Upgrade: runbooks/upgrade.md
