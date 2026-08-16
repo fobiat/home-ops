@@ -1,0 +1,13 @@
+---
+# Same trick as components/namespace, plus the Pod Security label local-path-provisioner's
+# helper pods need. Talos enforces baseline cluster-wide by default, and hostPath volumes
+# (how local-path-provisioner actually creates a PV) are disallowed below privileged. The
+# helper pod runs in the PVC's own namespace, not local-path-storage's, so every namespace
+# that wants a local-path PVC needs this, not just the provisioner's own namespace. Use this
+# component instead of components/namespace, never both.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: _
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
