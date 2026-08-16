@@ -1,13 +1,21 @@
 ---
 # Vendored from https://github.com/rancher/local-path-provisioner/blob/v0.0.37/deploy/local-path-storage.yaml,
 # pinned rather than referenced by URL so kustomize-controller never needs
-# network access at build time. Two changes from upstream: the node path
+# network access at build time. Three changes from upstream: the node path
 # points at the second disk's mount (ADR 0004, talos/talconfig.yaml
-# UserVolumeConfig), and the StorageClass is marked default.
+# UserVolumeConfig), the StorageClass is marked default, and the namespace
+# carries the Pod Security label its own helper pods need (they run here,
+# in the provisioner's namespace, not the PVC consumer's, and need
+# hostPath, which is disallowed below privileged under Talos's cluster-wide
+# baseline default). See components/namespace-privileged for the reusable
+# version of this label; this app defines its own Namespace object instead
+# of using that component, since it's vendored upstream content.
 apiVersion: v1
 kind: Namespace
 metadata:
   name: local-path-storage
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
 ---
 apiVersion: v1
 kind: ServiceAccount
