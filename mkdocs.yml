@@ -6,6 +6,11 @@ repo_url: https://github.com/fobiat/home-ops
 repo_name: fobiat/home-ops
 edit_uri: edit/main/docs/
 
+# superpowers:brainstorming specs are internal planning artifacts, not
+# published documentation.
+exclude_docs: |
+  superpowers/
+
 theme:
   name: material
   palette:
