@@ -24,18 +24,30 @@ model that looks like an ordinary API token and is not one.
 `kubernetes/apps/network/gateway-guard/app/validatingadmissionpolicy.yaml` both
 key off `object.metadata.name != 'external'` and `p.name == 'external'`. This is
 a string comparison, not a selector, so renaming the Gateway silently disarms all
-three validations at once. Nothing errors, nothing warns, the guard just stops
+four validations at once. Nothing errors, nothing warns, the guard just stops
 matching. That is the cost of a policy that can be read at a glance, and it is
 accepted on the condition that it is written down here.
+
+`external-route-namespace` matches five route kinds (`httproutes`, `grpcroutes`,
+`tlsroutes`, `tcproutes`, `udproutes`) even though `HTTPRoute` is the only one
+with any objects in this repository. All five CRDs are installed, because Gateway
+API ships them as one bundle rather than per kind, so listing all five is what
+stops a `GRPCRoute` or `TLSRoute` added later from bypassing the guard on a kind
+nobody remembered to add a rule for. The `network-gateway-guard` Flux
+Kustomization sets `targetNamespace: network` to match this app's home directory,
+but `ValidatingAdmissionPolicy` and `ValidatingAdmissionPolicyBinding` are
+cluster-scoped, so Kubernetes ignores it here; it is set for consistency with the
+rest of this repository's Kustomizations, not because it does anything.
 
 The `XListenerSet` CRD is installed on this cluster. It lets another namespace
 attach listeners to a Gateway, which would route around the exact-FQDN check
 entirely, because the check evaluates `object.spec.listeners` on the Gateway and
 an attached ListenerSet is not in that list. It is inert unless the Gateway sets
-`spec.allowedListeners`, so the rule is that this field is never set on the
-`external` Gateway. `kubernetes/apps/network-public/gateway/app/gateway.yaml`
-carries a comment saying so, because a reviewer cannot notice a field that is not
-there.
+`spec.allowedListeners`, so a third validation on `external-gateway-listeners`
+denies that field being set on the `external` Gateway at all.
+`kubernetes/apps/network-public/gateway/app/gateway.yaml` also carries a comment
+saying so, because a reviewer cannot notice a field that is not there, but the
+comment is now a signpost rather than the enforcement.
 
 ### 2. The CiliumNetworkPolicy exception to rule 11
 
@@ -98,9 +110,9 @@ a limitation of the provider rather than a preference.
 ## Consequences
 
 The three covered namespaces accept connections only from pods in their own
-namespace, plus the Gateway proxy where routes exist. That closes three of
-PHASE-TWO's four named pivot risks: Prometheus, Loki and Grafana in `monitoring`
-are no longer reachable from a compromised pod elsewhere.
+namespace, plus the Gateway proxy where routes exist. That closes three risks this
+design set out to close: Prometheus, Loki and Grafana in `monitoring` are no
+longer reachable from a compromised pod elsewhere.
 
 "Monitoring is isolated" is still the wrong summary on its own. A compromised pod
 in `default` cannot reach `kube-prometheus-stack-grafana:3000` directly, but it
@@ -130,17 +142,29 @@ for scope discipline, not because the risk was assessed as low.
 Two verification cases were added to the spec's plan while building this, and
 they are recorded here so they survive as requirements rather than folklore.
 `check-vap.sh` case 3 applies the existing `internal` Gateway and expects it to
-be accepted; it is the only case that evaluates `external-gateway-listeners` at
-all in the allow direction, so without it the policy could reject every Gateway
-on the cluster and the suite would still pass. Case 5 applies a wildcard listener
-on a Gateway named `external` and expects a denial naming the exact-FQDN rule; it
-is the negative control for the same policy. The script runs everything through
+be accepted; without it the policy could reject every Gateway on the cluster and
+the suite would still pass, since a non-matching name is the only path that
+proves the policy doesn't error. Case 6, added in the review fix round, is the
+stronger positive control: it submits the real shipped
+`kubernetes/apps/network-public/gateway/app/gateway.yaml` and is the only case
+that evaluates `external-gateway-listeners` against the actual `external`
+Gateway in the allow direction. Case 5 applies a wildcard listener on a Gateway
+named `external` and expects a denial naming the exact-FQDN rule; it is the
+negative control for the same policy. The script runs everything through
 `--dry-run=server` and persists nothing.
 
 One operational note from after the merge: cloudflared connects over HTTP/2 rather
 than its default QUIC transport, pinned as `protocol: http2` in
 `kubernetes/apps/network/cloudflared/app/configmap.yaml`, after the default
-transport produced a crash loop against this network.
+transport produced a crash loop against this network. Its liveness probe was
+relaxed in the same change (`initialDelaySeconds: 30`, `periodSeconds: 15`,
+`failureThreshold: 6`), giving roughly 120 seconds of startup runway; those
+numbers were sized generously rather than measured, so a later tidy-back to
+defaults would be undoing load-bearing values. The readiness probe added
+afterwards is what actually makes `maxUnavailable: 0` mean what the rollout
+strategy claims: without it a new pod counts as Ready before it has registered a
+tunnel connection, so a ConfigMap-triggered rollout could retire connected pods
+for pods that never connect.
 
 ## Alternatives
 

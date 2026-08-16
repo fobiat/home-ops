@@ -21,8 +21,9 @@ expect_denied() {
 }
 
 expect_allowed() {
-  local name=$1 file=$2 out rc
-  out=$(kubectl apply --dry-run=server -f "$file" 2>&1) && rc=0 || rc=$?
+  local name=$1 file=$2 namespace=${3:-} out rc extra_args=()
+  [[ -n "$namespace" ]] && extra_args=(-n "$namespace")
+  out=$(kubectl apply --dry-run=server "${extra_args[@]}" -f "$file" 2>&1) && rc=0 || rc=$?
   if [[ $rc -ne 0 ]]; then
     printf 'FAIL %s: expected acceptance, got: %s\n' "$name" "$out" >&2
     fail=1
@@ -98,6 +99,65 @@ spec:
       protocol: HTTPS
       port: 443
       hostname: "*.fobiat.dev"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: insights-fobiat-dev-tls
+      allowedRoutes:
+        namespaces:
+          from: Same
+EOF
+)"
+
+# The shipped Gateway carries no metadata.namespace of its own; kustomize supplies
+# it at deploy time, so this call has to pass one.
+expect_allowed "shipped-external-gateway" kubernetes/apps/network-public/gateway/app/gateway.yaml network-public
+
+expect_denied "external-gateway-open-routes" \
+  "the external Gateway may only accept routes from its own namespace" \
+  "$(cat <<'EOF'
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: external
+  namespace: network-public
+spec:
+  gatewayClassName: cilium
+  listeners:
+    - name: insights
+      protocol: HTTPS
+      port: 443
+      hostname: insights.fobiat.dev
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: insights-fobiat-dev-tls
+      allowedRoutes:
+        namespaces:
+          from: All
+EOF
+)"
+
+expect_denied "external-gateway-allowed-listeners-set" \
+  "the external Gateway may not delegate listeners to a ListenerSet" \
+  "$(cat <<'EOF'
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: external
+  namespace: network-public
+spec:
+  gatewayClassName: cilium
+  allowedListeners:
+    namespaces:
+      from: All
+  listeners:
+    - name: insights
+      protocol: HTTPS
+      port: 443
+      hostname: insights.fobiat.dev
       tls:
         mode: Terminate
         certificateRefs:

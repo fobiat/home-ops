@@ -35,6 +35,15 @@ spec:
             initialDelaySeconds: 30
             periodSeconds: 15
             failureThreshold: 6
+          # maxUnavailable: 0 only holds the tunnel open across a rollout if new
+          # pods stay unready until they have registered a connection.
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 2000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 3
           volumeMounts:
             - name: config
               mountPath: /etc/cloudflared/config.yaml
