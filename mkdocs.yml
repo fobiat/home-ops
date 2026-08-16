@@ -49,6 +49,7 @@ nav:
   - Gatus: gatus.md
   - Cluster backup: cluster-backup.md
   - tuppr: tuppr.md
+  - Exposure: exposure.md
   - Runbooks:
       - Restore: runbooks/restore.md
       - Upgrade: runbooks/upgrade.md
