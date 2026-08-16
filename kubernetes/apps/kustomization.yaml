@@ -12,3 +12,4 @@ resources:
   - ./local-path-storage
   - ./monitoring
   - ./default
+  - ./kube-tools

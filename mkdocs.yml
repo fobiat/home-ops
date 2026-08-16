@@ -38,6 +38,7 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Bootstrap: bootstrap.md
+  - Headlamp access: headlamp.md
   - Runbooks:
       - Restore: runbooks/restore.md
       - Upgrade: runbooks/upgrade.md
@@ -52,3 +53,4 @@ nav:
       - 0005 One node: adr/0005-single-node.md
       - 0006 Repository lineage: adr/0006-repository-lineage.md
       - 0007 Resource requests on critical pods: adr/0007-resource-requests-on-critical-pods.md
+      - 0008 Headlamp token login: adr/0008-headlamp-token-login.md
