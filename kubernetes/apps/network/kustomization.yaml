@@ -7,3 +7,4 @@ resources:
   - ./gateway/ks.yaml
   - ./external-dns/ks.yaml
   - ./netpol/ks.yaml
+  - ./gateway-guard/ks.yaml
