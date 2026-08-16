@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - ./homepage/ks.yaml
   - ./gatus/ks.yaml
+  - ./docs-proxy/ks.yaml
