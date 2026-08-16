@@ -5,9 +5,10 @@ One Talos node, one Flux repository, no configuration done by hand.
 If you are looking for something specific:
 
 - **Setting this up from nothing**: [Bootstrap](bootstrap.md)
+- **Adding an app to the dashboard**: [Homepage](homepage.md)
 - **Adding a health check for an app**: [Gatus](gatus.md)
 - **The disk died**: [Restore](runbooks/restore.md)
-- **Upgrading Talos or Kubernetes**: [Upgrade](runbooks/upgrade.md)
+- **Upgrading Talos or Kubernetes**: [Upgrade](runbooks/upgrade.md) ([or via tuppr](runbooks/tuppr-upgrade.md))
 - **Something is broken**: [Troubleshooting](runbooks/troubleshooting.md)
 - **Why is it like this**: [Decision records](adr/README.md)
 
