@@ -1,0 +1,64 @@
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: external-route-namespace
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["gateway.networking.k8s.io"]
+        apiVersions: ["*"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["httproutes", "grpcroutes", "tlsroutes", "tcproutes", "udproutes"]
+  variables:
+    - name: parents
+      expression: "has(object.spec.parentRefs) ? object.spec.parentRefs : []"
+  validations:
+    - expression: >-
+        namespaceObject.metadata.name == 'network-public' ||
+        !variables.parents.exists(p, p.name == 'external')
+      message: "a parentRef named 'external' is only allowed in the network-public namespace"
+      reason: Forbidden
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: external-gateway-listeners
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["gateway.networking.k8s.io"]
+        apiVersions: ["*"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["gateways"]
+  validations:
+    - expression: >-
+        object.metadata.name != 'external' ||
+        !object.spec.listeners.exists(l, !has(l.hostname) || l.hostname.contains('*'))
+      message: "the external Gateway requires an exact FQDN on every listener"
+      reason: Forbidden
+    - expression: >-
+        object.metadata.name != 'external' ||
+        object.spec.listeners.all(l, !has(l.allowedRoutes) ||
+          !has(l.allowedRoutes.namespaces) ||
+          l.allowedRoutes.namespaces.from == 'Same')
+      message: "the external Gateway may only accept routes from its own namespace"
+      reason: Forbidden
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: external-route-namespace
+spec:
+  policyName: external-route-namespace
+  validationActions: [Deny]
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: external-gateway-listeners
+spec:
+  policyName: external-gateway-listeners
+  validationActions: [Deny]
