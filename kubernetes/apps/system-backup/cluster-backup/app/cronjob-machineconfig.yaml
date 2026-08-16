@@ -1,0 +1,110 @@
+---
+# Suspended until talos-machineconfig-backup.PLACEHOLDER.yaml has been turned into a
+# real secret. See that file and ADR 0009.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: machineconfig-backup
+spec:
+  schedule: "30 3 * * *"
+  timeZone: Europe/London
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 300
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  suspend: true
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: machineconfig-backup
+        spec:
+          restartPolicy: OnFailure
+          initContainers:
+            # `talosctl get` only ever writes to stdout, and the talosctl image has no
+            # shell to redirect it with. This container copies a static busybox binary
+            # onto a shared volume so the next one can exec a real shell from inside its
+            # own otherwise shell-less filesystem.
+            - name: shell
+              image: docker.io/library/busybox:1.37.0
+              command:
+                - /bin/sh
+                - -c
+                - cp /bin/busybox /shell/busybox && chmod +x /shell/busybox
+              volumeMounts:
+                - name: shell-bin
+                  mountPath: /shell
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 16Mi
+                limits:
+                  memory: 32Mi
+            - name: fetch
+              image: ghcr.io/siderolabs/talosctl:v1.13.8
+              command:
+                - /shell/busybox
+              args:
+                - sh
+                - -c
+                - >-
+                  /talosctl get mc v1alpha1 -o yaml
+                  --talosconfig=/var/run/secrets/talos/talosconfig
+                  > /staging/machineconfig.yaml
+              volumeMounts:
+                - name: shell-bin
+                  mountPath: /shell
+                - name: staging
+                  mountPath: /staging
+                - name: talos-credentials
+                  mountPath: /var/run/secrets/talos
+                  readOnly: true
+              resources:
+                requests:
+                  cpu: 25m
+                  memory: 64Mi
+                limits:
+                  memory: 128Mi
+          containers:
+            - name: finalize
+              image: docker.io/library/busybox:1.37.0
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -eu
+                  test -s /staging/machineconfig.yaml
+                  grep -q 'machine:' /staging/machineconfig.yaml
+                  mkdir -p /backup/machineconfig
+                  dest="/backup/machineconfig/mc-$(date -u +%Y%m%dT%H%M%SZ).yaml"
+                  mv /staging/machineconfig.yaml "$dest"
+                  echo "wrote $dest"
+                  cd /backup/machineconfig
+                  ls -1t mc-*.yaml | tail -n "+$((RETAIN + 1))" | xargs -r rm -f --
+              env:
+                - name: RETAIN
+                  value: "30"
+              volumeMounts:
+                - name: staging
+                  mountPath: /staging
+                - name: backup-data
+                  mountPath: /backup
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  memory: 64Mi
+          volumes:
+            - name: shell-bin
+              emptyDir: {}
+            - name: staging
+              emptyDir: {}
+            - name: talos-credentials
+              secret:
+                secretName: talos-machineconfig-backup
+            - name: backup-data
+              persistentVolumeClaim:
+                claimName: cluster-backup-data

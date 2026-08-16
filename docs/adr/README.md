@@ -19,3 +19,4 @@ reading.
 | [0006](0006-repository-lineage.md) | Building v3 on the 2021 repository | Accepted |
 | [0007](0007-resource-requests-on-critical-pods.md) | Resource requests on cluster-critical pods, never BestEffort QoS | Accepted |
 | [0008](0008-headlamp-token-login.md) | Headlamp: token login, not OIDC or auto-login | Accepted |
+| [0009](0009-cluster-backup-credentials.md) | Etcd snapshots and machine-config backups from in-cluster CronJobs | Accepted |

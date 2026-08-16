@@ -11,5 +11,6 @@ resources:
   - ./reloader
   - ./local-path-storage
   - ./monitoring
+  - ./system-backup
   - ./default
   - ./kube-tools

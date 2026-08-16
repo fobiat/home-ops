@@ -46,6 +46,7 @@ nav:
       - Upgrade: runbooks/upgrade.md
       - Troubleshooting: runbooks/troubleshooting.md
       - Crash storm: runbooks/crash-storm.md
+      - Etcd snapshot restore: runbooks/etcd-restore.md
   - Decisions:
       - Overview: adr/README.md
       - 0001 Talos over k3s: adr/0001-talos-over-k3s.md
@@ -56,3 +57,4 @@ nav:
       - 0006 Repository lineage: adr/0006-repository-lineage.md
       - 0007 Resource requests on critical pods: adr/0007-resource-requests-on-critical-pods.md
       - 0008 Headlamp token login: adr/0008-headlamp-token-login.md
+      - 0009 Cluster backup credentials: adr/0009-cluster-backup-credentials.md
