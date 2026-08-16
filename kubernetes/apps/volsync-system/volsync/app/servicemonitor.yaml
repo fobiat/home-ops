@@ -1,0 +1,23 @@
+---
+# Chart 0.16.0 ships no ServiceMonitor, so this is ours and can carry the
+# `release` label Prometheus selects on. That avoids widening
+# serviceMonitorSelector on kube-prometheus-stack to the whole cluster.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: volsync
+  labels:
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      control-plane: volsync-controller
+  endpoints:
+    - port: https
+      path: /metrics
+      scheme: https
+      interval: 30s
+      bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+      tlsConfig:
+        # The controller serves its own self-signed cert on 8443.
+        insecureSkipVerify: true

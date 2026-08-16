@@ -1,0 +1,37 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: volsync
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: volsync.rules
+      rules:
+        # Both rules below are silent while no ReplicationSource exists, which is
+        # the state this app ships in. The companion `absent()` rule that catches
+        # a deleted or crashlooping controller lands with the first
+        # ReplicationSource, because until then the series is legitimately absent
+        # and the alert would fire on an empty cluster.
+        - alert: VolSyncVolumeOutOfSync
+          expr: volsync_volume_out_of_sync == 1
+          for: 1h
+          labels:
+            severity: critical
+          annotations:
+            summary: A VolSync replicated volume is out of sync
+            description: >-
+              {{ $labels.obj_namespace }}/{{ $labels.obj_name }} has not completed
+              a sync within its schedule, so its most recent backup is older than
+              it should be.
+        - alert: VolSyncMissedInterval
+          expr: increase(volsync_missed_intervals_total[24h]) > 0
+          labels:
+            severity: warning
+          annotations:
+            summary: A VolSync sync interval was missed
+            description: >-
+              {{ $labels.obj_namespace }}/{{ $labels.obj_name }} missed a
+              scheduled sync in the last 24 hours. One mover runs at a time here,
+              so overlapping schedules are the usual cause.
