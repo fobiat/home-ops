@@ -15,6 +15,11 @@ is replication.
 Rancher's local-path-provisioner, backed by the second SSD, which Talos hands over as a
 `UserVolumeConfig` mounted at `/var/mnt/data`.
 
+> **Correction, 2026-08-16.** The `UserVolumeConfig` described here never provisioned.
+> `/var/mnt/data` was a directory on the ephemeral partition from the day the cluster
+> was built until the fix in ADR 0012. The decision recorded here stands; the claim
+> that it was in effect did not.
+
 ## Consequences
 
 Good: almost nothing to run. No extra CRDs, no operator, no system extension, no
