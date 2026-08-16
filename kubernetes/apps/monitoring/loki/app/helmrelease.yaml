@@ -1,0 +1,90 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: grafana
+spec:
+  interval: 1h
+  url: https://grafana.github.io/helm-charts
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: loki
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: loki
+      version: 7.3.0
+      sourceRef:
+        kind: HelmRepository
+        name: grafana
+  values:
+    # SimpleScalable and Distributed both require S3-compatible object storage,
+    # which this cluster doesn't have. SingleBinary is the only mode that runs
+    # on local-path filesystem storage.
+    deploymentMode: SingleBinary
+    loki:
+      # Single tenant homelab, no need for the multi-tenant auth path.
+      auth_enabled: false
+      commonConfig:
+        # Chart default is 3, which the single replica can't satisfy.
+        replication_factor: 1
+      storage:
+        type: filesystem
+      schemaConfig:
+        configs:
+          - from: "2024-01-01"
+            store: tsdb
+            object_store: filesystem
+            schema: v13
+            index:
+              prefix: index_
+              period: 24h
+      limits_config:
+        # Matches Prometheus's 7d retention in kube-prometheus-stack.
+        retention_period: 168h
+      compactor:
+        retention_enabled: true
+        delete_request_store: filesystem
+    singleBinary:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          memory: 512Mi
+      persistence:
+        enabled: true
+        size: 10Gi
+        storageClass: local-path
+    # SimpleScalable-only targets. Chart validation fails if these are left
+    # at their non-zero defaults while deploymentMode is SingleBinary.
+    read:
+      replicas: 0
+    write:
+      replicas: 0
+    backend:
+      replicas: 0
+    # nginx gateway only earns its keep fronting multiple read/write pods.
+    gateway:
+      enabled: false
+    # Both default to memcached StatefulSets sized for real ingestion volume
+    # (chunksCache alone wants 8Gi allocated). Not worth it for one node.
+    chunksCache:
+      enabled: false
+    resultsCache:
+      enabled: false
+    # DaemonSet that self-tests by writing/reading canary logs. Its helm test
+    # hook requires this pair to be enabled or disabled together.
+    lokiCanary:
+      enabled: false
+    test:
+      enabled: false
+    # Rules sidecar is for the Loki ruler (alerting on log queries), which
+    # this deployment doesn't use. Ships with no resources set otherwise.
+    sidecar:
+      rules:
+        enabled: false

@@ -1,0 +1,10 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+components:
+  # local-path PVC for the single-binary StatefulSet needs the privileged
+  # namespace label, same reason kube-prometheus-stack needs it.
+  - ../../../../components/namespace-privileged
+resources:
+  - ./helmrelease.yaml
+  - ./grafana-datasource.yaml

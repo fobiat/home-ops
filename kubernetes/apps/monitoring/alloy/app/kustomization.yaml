@@ -1,0 +1,9 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+components:
+  # hostPath log mounts need the privileged namespace label; baseline (the
+  # cluster default) disallows hostPath volumes entirely.
+  - ../../../../components/namespace-privileged
+resources:
+  - ./helmrelease.yaml
