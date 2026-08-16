@@ -1,0 +1,23 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: external
+spec:
+  # Never set spec.allowedListeners here. The XListenerSet CRD is installed, and
+  # allowing it would let another namespace attach listeners that skip the
+  # exact-FQDN check in the external-gateway-listeners policy.
+  gatewayClassName: cilium
+  listeners:
+    - name: insights
+      protocol: HTTPS
+      port: 443
+      hostname: insights.fobiat.dev
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: insights-fobiat-dev-tls
+      allowedRoutes:
+        namespaces:
+          from: Same
