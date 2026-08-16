@@ -8,6 +8,7 @@ If you are looking for something specific:
 - **Adding an app to the dashboard**: [Homepage](homepage.md)
 - **Adding a health check for an app**: [Gatus](gatus.md)
 - **What's actually backed up**: [Cluster backup](cluster-backup.md)
+- **Publishing something to the internet**: [Exposure](exposure.md)
 - **The disk died**: [Restore](runbooks/restore.md)
 - **Upgrading Talos or Kubernetes**: [Upgrade](runbooks/upgrade.md) (or via [tuppr](tuppr.md))
 - **Something is broken**: [Troubleshooting](runbooks/troubleshooting.md)

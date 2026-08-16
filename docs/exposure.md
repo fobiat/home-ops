@@ -41,7 +41,7 @@ Missing any one of them fails safe, and each failure has its own signature:
 
 | Missing | What you see |
 | --- | --- |
-| Route in the wrong namespace | Route status `NotAllowedByListeners` |
+| Route in the wrong namespace | The write is denied at admission. A hand `kubectl apply` fails outright and Flux's reconcile fails the same way, so no route object ever exists to carry a status |
 | Hostname not on a listener | Route status `NoMatchingListenerHostname` |
 | ReferenceGrant | A 500 from the Gateway, not a route to somewhere unintended |
 | Tunnel ingress entry | The closing 404 |
@@ -56,8 +56,10 @@ Two ValidatingAdmissionPolicies, in
   catches a hand `kubectl apply` that Flux would otherwise only revert an hour
   later.
 - **`external-gateway-listeners`** denies a listener on the `external` Gateway with
-  a wildcard or absent hostname, and denies `allowedRoutes.namespaces.from` being
-  anything other than `Same`.
+  a wildcard or absent hostname, denies `allowedRoutes.namespaces.from` being
+  anything other than `Same`, and denies `spec.allowedListeners` being set at all,
+  which would otherwise let a ListenerSet in another namespace attach a listener
+  that skips the first two checks.
 
 `scripts/check-vap.sh` proves both, in the deny direction and the allow direction,
 through `--dry-run=server`. It persists nothing and is re-runnable, including after
@@ -67,6 +69,22 @@ external-dns cannot publish any of this even if all of the above failed. It sour
 records from HTTPRoutes only, its provider is AdGuard on the LAN rather than
 Cloudflare, and its `domainFilters` suffix is `lab.fobiat.dev`, which does not match
 `insights.fobiat.dev`.
+
+The four objects above are not equally guarded, and "missing any one of them fails
+safe" should not be read as "all four are policy-enforced". The first three are:
+the Gateway lives in its own namespace, both admission policies reject the obvious
+mistakes at write time, and a missing `ReferenceGrant` is enforced by the Gateway
+API implementation itself. The fourth, cloudflared's ingress list, is not checked
+by anything. It sits upstream of all three, so a single entry pointing at
+`cilium-gateway-internal.network.svc.cluster.local:443` would publish every LAN
+service without touching the `external` Gateway, either policy, `routes/app/` or
+any `ReferenceGrant`, and `ls kubernetes/apps/network-public/routes/app/` would
+still truthfully say nothing is routed through the external Gateway while missing
+that a second publish path exists. The only controls on that file today are review
+of the pull request that changes it and the fact that external-dns cannot create a
+public DNS record to reach anything routed that way. Worth closing later with a CI
+check or an admission policy asserting the ingress list only ever names
+`cilium-gateway-external.network-public`. Not urgent while the DNS half is absent.
 
 ## What this does not protect
 
