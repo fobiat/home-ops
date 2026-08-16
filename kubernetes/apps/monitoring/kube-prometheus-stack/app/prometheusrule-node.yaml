@@ -1,0 +1,37 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: node-storage
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: node-storage.rules
+      rules:
+        # An unmounted disk is an absent series, not a bad value, which is why
+        # absent() and not a threshold. See ADR 0012.
+        - alert: DataVolumeNotMounted
+          expr: absent(node_filesystem_size_bytes{mountpoint="/var/mnt/data"})
+          for: 15m
+          labels:
+            severity: critical
+          annotations:
+            summary: The data user volume is not mounted
+            description: >-
+              /var/mnt/data is not a mounted filesystem, so every PVC is on the
+              ephemeral partition that a Talos reset wipes. Check
+              `talosctl get volumestatus u-data`.
+        - alert: DataVolumeLowSpace
+          expr: >-
+            node_filesystem_avail_bytes{mountpoint="/var/mnt/data"}
+            / node_filesystem_size_bytes{mountpoint="/var/mnt/data"} < 0.30
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: The data volume is below 30 percent free
+            description: >-
+              local-path is a bind mount with no per-volume quota, so one volume
+              filling the disk takes every other volume with it.
