@@ -44,6 +44,7 @@ nav:
   - Runbooks:
       - Restore: runbooks/restore.md
       - Upgrade: runbooks/upgrade.md
+      - tuppr upgrade: runbooks/tuppr-upgrade.md
       - Troubleshooting: runbooks/troubleshooting.md
       - Crash storm: runbooks/crash-storm.md
       - Etcd snapshot restore: runbooks/etcd-restore.md
@@ -58,3 +59,4 @@ nav:
       - 0007 Resource requests on critical pods: adr/0007-resource-requests-on-critical-pods.md
       - 0008 Headlamp token login: adr/0008-headlamp-token-login.md
       - 0009 Cluster backup credentials: adr/0009-cluster-backup-credentials.md
+      - 0010 tuppr upgrades: adr/0010-tuppr-upgrades.md

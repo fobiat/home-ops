@@ -1,0 +1,46 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: tuppr
+spec:
+  interval: 1h
+  layerSelector:
+    mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
+    operation: copy
+  url: oci://ghcr.io/home-operations/charts/tuppr
+  ref:
+    tag: 0.5.0
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: tuppr
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: tuppr
+  # See kube-prometheus-stack's HelmRelease for why remediation/cleanup are set.
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
+  values:
+    # Single node, four cores. See AGENTS.md rule 7.
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        memory: 128Mi
+    # Talos mints the *-talosconfig Secret this Deployment mounts, but only
+    # after the machine config prerequisite is applied (a one-time change
+    # outside this repo's tuppr PR). Until then the pod cannot start, since the
+    # Secret does not exist yet. See ADR 0010 and docs/runbooks/tuppr-upgrade.md.
+    talosServiceAccount:
+      create: true

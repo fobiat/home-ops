@@ -20,3 +20,4 @@ reading.
 | [0007](0007-resource-requests-on-critical-pods.md) | Resource requests on cluster-critical pods, never BestEffort QoS | Accepted |
 | [0008](0008-headlamp-token-login.md) | Headlamp: token login, not OIDC or auto-login | Accepted |
 | [0009](0009-cluster-backup-credentials.md) | Etcd snapshots and machine-config backups from in-cluster CronJobs | Accepted |
+| [0010](0010-tuppr-upgrades.md) | tuppr for Talos and Kubernetes upgrades | Accepted |
