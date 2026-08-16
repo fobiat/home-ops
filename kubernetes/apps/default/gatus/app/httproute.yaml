@@ -3,6 +3,12 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: gatus
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Gatus
+    gethomepage.dev/description: Status page and uptime checks
+    gethomepage.dev/group: Cluster
+    gethomepage.dev/icon: gatus.png
 spec:
   parentRefs:
     - name: internal

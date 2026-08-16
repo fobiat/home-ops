@@ -45,6 +45,11 @@ spec:
         memory: 64Mi
       limits:
         memory: 128Mi
+    # Cluster-scoped, read-only get/list on namespaces/pods/nodes/ingresses/
+    # HTTPRoutes/gateways, needed for config.kubernetes discovery below.
+    enableRbac: true
+    serviceAccount:
+      create: true
     config:
       settingsString: |
         title: Home Ops
@@ -54,14 +59,13 @@ spec:
             style: row
             columns: 2
       bookmarks: []
-      services:
-        - Cluster:
-            - Grafana:
-                href: https://grafana.lab.fobiat.dev
-                description: Dashboards and metrics explorer
-            - Prometheus:
-                href: https://prometheus.lab.fobiat.dev
-                description: Metrics and alerting
+      # Services come from gethomepage.dev/* annotations on each app's own
+      # HTTPRoute (see e.g. grafana's), not a static list, so a new app shows
+      # up without a Homepage edit. The old static list carried a dead
+      # Prometheus link with no HTTPRoute behind it.
+      kubernetes:
+        mode: cluster
+        gateway: true
       widgets:
         - resources:
             backend: resources
