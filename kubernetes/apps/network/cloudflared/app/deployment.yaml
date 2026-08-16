@@ -32,7 +32,9 @@ spec:
             httpGet:
               path: /ready
               port: 2000
-            initialDelaySeconds: 10
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 6
           volumeMounts:
             - name: config
               mountPath: /etc/cloudflared/config.yaml
