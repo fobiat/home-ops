@@ -38,6 +38,7 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Bootstrap: bootstrap.md
+  - Homepage: homepage.md
   - Headlamp access: headlamp.md
   - Grafana dashboards: monitoring-dashboards.md
   - Gatus: gatus.md
