@@ -13,3 +13,15 @@ data:
     ui:
       title: home-ops status
       header: home-ops
+    # Gatus panics rather than waits if it loads a config with no endpoints, and
+    # the sidecar's directory is legitimately empty for the first few seconds of
+    # every start. Keeping one endpoint here means the base config is always
+    # valid on its own. The Kubernetes API is the natural choice: no app
+    # directory owns it, so it has nowhere else to live.
+    endpoints:
+      - name: kubernetes-api
+        group: cluster
+        url: "tcp://kubernetes.default.svc.cluster.local:443"
+        interval: 1m
+        conditions:
+          - "[CONNECTED] == true"
