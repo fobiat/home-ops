@@ -142,11 +142,15 @@ for scope discipline, not because the risk was assessed as low.
 Two verification cases were added to the spec's plan while building this, and
 they are recorded here so they survive as requirements rather than folklore.
 `check-vap.sh` case 3 applies the existing `internal` Gateway and expects it to
-be accepted; it is the only case that evaluates `external-gateway-listeners` at
-all in the allow direction, so without it the policy could reject every Gateway
-on the cluster and the suite would still pass. Case 5 applies a wildcard listener
-on a Gateway named `external` and expects a denial naming the exact-FQDN rule; it
-is the negative control for the same policy. The script runs everything through
+be accepted; without it the policy could reject every Gateway on the cluster and
+the suite would still pass, since a non-matching name is the only path that
+proves the policy doesn't error. Case 6, added in the review fix round, is the
+stronger positive control: it submits the real shipped
+`kubernetes/apps/network-public/gateway/app/gateway.yaml` and is the only case
+that evaluates `external-gateway-listeners` against the actual `external`
+Gateway in the allow direction. Case 5 applies a wildcard listener on a Gateway
+named `external` and expects a denial naming the exact-FQDN rule; it is the
+negative control for the same policy. The script runs everything through
 `--dry-run=server` and persists nothing.
 
 One operational note from after the merge: cloudflared connects over HTTP/2 rather
