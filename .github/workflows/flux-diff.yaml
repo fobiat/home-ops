@@ -34,6 +34,24 @@ jobs:
           path: kubernetes/flux/cluster
           live-branch: main
           resource: ${{ matrix.resource }}
+          # Keeps the worst case (a chart rendering many resources, e.g.
+          # kube-prometheus-stack's PrometheusRules and RBAC) well under
+          # GitHub's own PR comment size limit.
+          limit-bytes: 1500
+
+      # Passing the diff inline as ${{ steps.diff.outputs.diff }} expands it into the
+      # comment step's own process invocation, which fails with "Argument list too
+      # long" once the diff is large, regardless of the per-resource limit-bytes above
+      # (found on kube-prometheus-stack's own PR). Writing it to a file and reading
+      # that via message-path sidesteps the OS argument limit entirely.
+      - name: Format diff for the PR comment
+        if: steps.diff.outputs.diff != ''
+        run: |
+          {
+            echo '```diff'
+            cat diff.patch
+            echo '```'
+          } > diff-comment.md
 
       - name: Comment on the PR
         if: steps.diff.outputs.diff != ''
@@ -42,7 +60,4 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           message-id: "${{ github.event.pull_request.number }}/${{ matrix.resource }}"
           message-failure: Diff failed
-          message: |
-            ```diff
-            ${{ steps.diff.outputs.diff }}
-            ```
+          message-path: diff-comment.md
