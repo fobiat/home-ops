@@ -1,0 +1,19 @@
+---
+# Watched by the k8s-sidecar container in the gatus app (kubernetes/apps/default/gatus),
+# which picks up any ConfigMap labelled gatus.io/enabled=true cluster-wide. See
+# docs/gatus.md for how this pattern works end to end.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gatus-check-grafana
+  labels:
+    gatus.io/enabled: "true"
+data:
+  grafana.yaml: |
+    endpoints:
+      - name: grafana
+        group: apps
+        url: "https://grafana.lab.fobiat.dev"
+        interval: 1m
+        conditions:
+          - "[STATUS] == 200"

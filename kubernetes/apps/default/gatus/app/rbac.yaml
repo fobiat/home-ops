@@ -1,0 +1,26 @@
+---
+# Grants the chart-created "gatus" ServiceAccount (values.serviceAccount.create
+# in helmrelease.yaml) read access to ConfigMaps in every namespace, which is
+# what lets the k8s-sidecar container find checks labelled gatus.io/enabled=true
+# wherever they live.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: gatus-sidecar
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: gatus-sidecar
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: gatus-sidecar
+subjects:
+  - kind: ServiceAccount
+    name: gatus
+    namespace: default

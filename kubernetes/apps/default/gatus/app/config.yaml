@@ -1,0 +1,15 @@
+---
+# Base config: storage and UI settings that apply cluster-wide, distinct from
+# the per-app endpoint checks the sidecar collects into /gatus-config/endpoints.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gatus-base-config
+data:
+  config.yaml: |
+    storage:
+      type: sqlite
+      path: /data/data.db
+    ui:
+      title: home-ops status
+      header: home-ops
