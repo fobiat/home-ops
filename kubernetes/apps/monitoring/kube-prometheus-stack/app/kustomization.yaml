@@ -8,5 +8,6 @@ resources:
   - ./helmrelease.yaml
   - ./httproute.yaml
   - ./gatus-check.yaml
+  - ./prometheusrule-node.yaml
   # ./alertmanager-discord-webhook.sops.yaml: add once the real webhook is
   # encrypted (see alertmanager-discord-webhook.PLACEHOLDER.yaml in this dir).
