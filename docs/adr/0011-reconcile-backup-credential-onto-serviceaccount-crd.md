@@ -50,7 +50,8 @@ narrowest role Talos has, exactly one RPC and nothing else. Moving it onto the s
 future pod in that namespace could request. The machine-config job already needs
 `os:admin`, so consolidating onto it costs nothing that wasn't already true; giving the
 etcd job the same blast radius for no reason would be a regression, not a reconciliation.
-It keeps its own static cert per ADR 0009, unminted, still suspended.
+It keeps its own static cert per ADR 0009. Minted and unsuspended 2026-08-16, once
+this PR merges the reasoning above no longer required both jobs to move together.
 
 ## Consequences
 

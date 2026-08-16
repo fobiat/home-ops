@@ -10,3 +10,7 @@ resources:
   - ./cronjob-etcd-snapshot.yaml
   - ./cronjob-machineconfig.yaml
   - ./talos-serviceaccount.yaml
+  - ./talos-etcd-backup.sops.yaml
+  - ./volsync-repo-pvc.yaml
+  - ./cluster-backup-restic-secret.sops.yaml
+  - ./replicationsource.yaml

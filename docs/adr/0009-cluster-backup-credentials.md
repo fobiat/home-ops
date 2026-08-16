@@ -106,9 +106,10 @@ about as narrow as Talos RBAC gets.
 
 Bad, and worth being exact about:
 
-- **Neither CronJob is live.** Both ship `suspend: true`. Someone has to run the
-  one-time `talosctl config new` command, twice, before either job does anything. Until
-  then this is manifests and a documented gap, not a working backup.
+- **Neither CronJob was live at merge time.** Both shipped `suspend: true`, needing the
+  one-time `talosctl config new` step (or, for `machineconfig-backup` after ADR 0011,
+  a machine config grant) before either did anything. Both are live now:
+  `machineconfig-backup` since PR #41/#42, `etcd-snapshot` since 2026-08-16.
 - **The machine-config credential is `os:admin`, not a narrow role**, because Talos does
   not have one for reading machine config. That is a real, larger blast radius than the
   etcd job's credential, accepted because there is no narrower option, not because it

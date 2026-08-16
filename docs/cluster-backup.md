@@ -9,18 +9,22 @@ the two jobs authenticate to the Talos API differently.
 
 Both write to the same 5Gi PVC (`cluster-backup-data`, `local-path`).
 
+Both CronJobs run `Etc/UTC` rather than `Europe/London`. VolSync's own cronspecs (below)
+have no timezone field, so the whole 03:15-04:40 backup window is pinned to UTC to keep
+the stagger real instead of drifting an hour twice a year with BST.
+
 ## etcd-snapshot
 
-Daily at 03:15 Europe/London, keeps the last 14 snapshots. **Still suspended.** Its
+Daily at 03:15 UTC, keeps the last 14 snapshots. **Running**, since 2026-08-16. Its
 credential is a static Talos client certificate scoped to `os:etcd:backup`, the
-narrowest role Talos has (exactly one RPC, nothing else), minted once by hand and
-delivered via SOPS rather than the ServiceAccount CRD mechanism `machineconfig-backup`
-uses. See `talos-etcd-backup.PLACEHOLDER.yaml` for the exact `talosctl config new`
-command. Nothing runs until that one-time step happens.
+narrowest role Talos has (exactly one RPC, nothing else), minted once by hand
+(`talosctl config new ... --roles os:etcd:backup`) and delivered via SOPS
+(`talos-etcd-backup.sops.yaml`) rather than the ServiceAccount CRD mechanism
+`machineconfig-backup` uses.
 
 ## machineconfig-backup
 
-Daily at 03:30 Europe/London, keeps the last 30 exports. **Running.** Authenticates via
+Daily at 03:30 UTC, keeps the last 30 exports. **Running.** Authenticates via
 a `talos.dev/v1alpha1 ServiceAccount` (`os:admin`, the only role Talos has for reading
 machine config), the same mechanism [tuppr](adr/0010-tuppr-upgrades.md) uses. Talos
 mints the credential automatically once the `system-backup` namespace is granted, no
@@ -29,6 +33,18 @@ manual cert to mint or rotate for this one.
 The export is a drift check, not a recovery input: the authoritative source stays
 `talos/` in Git (rule 5). It's useful for spotting when the running node has drifted
 from what's committed, not as something a restore reads from.
+
+## Offsite copy
+
+A VolSync `ReplicationSource` (`cluster-backup-data`, 04:40 UTC, 70 minutes after
+machineconfig-backup's last writer) ships whatever both CronJobs above have written to
+an interim restic repository on its own PVC (`volsync-repo`, same namespace), same
+mechanism as [Gatus's backup](gatus.md). No custom `moverSecurityContext`: neither
+CronJob sets one, so their files land owned by UID 0 with no capabilities dropped, which
+an unadorned mover can already read. A suspended sibling app,
+`cluster-backup-restore`, ships the restore path disarmed; see
+[gatus.md](gatus.md#restoring) for how arming one works (same mechanism, this
+namespace's own `ReplicationDestination`).
 
 ## Verifying a backup actually ran
 

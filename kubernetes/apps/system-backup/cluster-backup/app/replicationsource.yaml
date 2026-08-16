@@ -1,0 +1,40 @@
+---
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: cluster-backup-data
+spec:
+  sourcePVC: cluster-backup-data
+  trigger:
+    # UTC, 70 minutes after machineconfig-backup's last writer (03:30). See
+    # gatus/app/replicationsource.yaml for why VolSync's cronspecs are pinned
+    # to UTC rather than following these CronJobs' own Europe/London.
+    schedule: "40 4 * * *"
+  restic:
+    repository: cluster-backup-restic
+    # local-path is not a CSI driver, so Snapshot and Clone do not exist here.
+    copyMethod: Direct
+    pruneIntervalDays: 14
+    retain:
+      daily: 7
+      weekly: 5
+      monthly: 6
+    cacheCapacity: 1Gi
+    # No moverSecurityContext override: neither CronJob in this namespace sets
+    # a securityContext, so their files land owned by UID 0 with no dropped
+    # capabilities, which an unadorned (also UID 0) mover can already read.
+    # Unlike Gatus (65534) and Grafana (472), there is no other-UID file to
+    # match here.
+    # Requests keep the mover Burstable; Talos SIGKILLs BestEffort cgroups first
+    # and a silently killed mover is a silently stopped backup. Immutable field.
+    moverResources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1Gi
+    moverVolumes:
+      - mountPath: repo
+        volumeSource:
+          persistentVolumeClaim:
+            claimName: volsync-repo

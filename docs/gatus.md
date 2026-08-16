@@ -70,6 +70,32 @@ permanently red with a DNS error rather than a timeout or a real failure, this i
 first thing to check: `kubectl -n default exec deploy/gatus -c gatus -- nslookup
 grafana.lab.fobiat.dev`.
 
+## Backups
+
+The `gatus` PVC (1Gi, holds the SQLite uptime history) is backed up daily at 04:00 UTC
+by a VolSync `ReplicationSource` to an interim restic repository on its own PVC
+(`volsync-repo`, `default` namespace). `copyMethod: Direct`, since `local-path` isn't a
+CSI driver and has no snapshot or clone. `moverSecurityContext` is `65534/65534/65534`,
+read off the running pod's own `securityContext`, not chart defaults: Talos assigns no
+UID ranges, so an unadorned mover runs as UID 0 without `DAC_OVERRIDE` and can't read
+Gatus's 65534-owned files.
+
+VolSync fires a first sync immediately on `ReplicationSource` creation regardless of its
+cron schedule, then follows the schedule after. Confirmed live 2026-08-16:
+`status.latestMoverStatus.result: Successful`, restic log `created restic repository
+... at /mnt/repo/gatus`, `processed 3 files, 4.085 MiB`, `snapshot a36e76f6 saved`.
+
+### Restoring
+
+`gatus-restore` is a sibling app carrying a `ReplicationDestination` pointed at the same
+PVC, shipped with its Flux Kustomization `suspend: true` so the object never exists in
+the cluster at rest. A `ReplicationDestination` with `copyMethod: Direct` and a
+`destinationPVC` pointing at a live PVC fires the moment it's created, because
+`status.lastManualSync` starts empty. To restore: set `suspend: false` on the
+`gatus-restore` Kustomization and bump `spec.trigger.manual` to a new value, wait for
+`status.lastManualSync` to match, then reverse both. See `docs/runbooks/restore.md`
+(currently `UNTESTED`; the drill that proves this path is still open).
+
 ## Not yet configured
 
 Alerting from Gatus to Discord is not set up. There is no `home-ops` Discord webhook

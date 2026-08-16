@@ -1,18 +1,22 @@
 ---
-# Suspended until talos-etcd-backup.PLACEHOLDER.yaml has been turned into a real
-# secret. See that file and ADR 0009.
+# talos-etcd-backup credential minted 2026-08-16 (os:etcd:backup role, the
+# narrowest Talos has: exactly one RPC). See talos-etcd-backup.sops.yaml and
+# ADR 0009. UTC rather than Europe/London: VolSync's own cronspecs (see
+# cluster-backup-data's replicationsource.yaml, 04:40) have no timezone field,
+# so pinning every producer in this window to Etc/UTC keeps the 03:15/03:30
+# stagger real instead of drifting an hour twice a year with BST.
 apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: etcd-snapshot
 spec:
   schedule: "15 3 * * *"
-  timeZone: Europe/London
+  timeZone: Etc/UTC
   concurrencyPolicy: Forbid
   startingDeadlineSeconds: 300
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
-  suspend: true
+  suspend: false
   jobTemplate:
     spec:
       backoffLimit: 2
