@@ -1,0 +1,42 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: backube
+spec:
+  interval: 1h
+  url: https://backube.github.io/helm-charts/
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: volsync
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: volsync
+      version: 0.16.0
+      sourceRef:
+        kind: HelmRepository
+        name: backube
+  # See kube-prometheus-stack's HelmRelease for why remediation/cleanup are set.
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
+  values:
+    manageCRDs: true
+    # Single node, four cores. See AGENTS.md rule 7. The chart ships a 1000m CPU
+    # limit; null removes it, matching every other workload in this tree.
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        cpu: null
+        memory: 192Mi
