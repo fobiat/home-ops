@@ -1,0 +1,19 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: monitoring-netpol
+  namespace: flux-system
+spec:
+  targetNamespace: monitoring
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: monitoring-netpol
+  path: ./kubernetes/apps/monitoring/netpol/app
+  prune: true
+  wait: true
+  interval: 1h
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system

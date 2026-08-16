@@ -7,3 +7,4 @@ resources:
   - ./alloy/ks.yaml
   - ./grafana-dashboards/ks.yaml
   - ./grafana-restore/ks.yaml
+  - ./netpol/ks.yaml
