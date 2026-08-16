@@ -30,10 +30,24 @@ tasks:
 
   lint:kubeconform:
     desc: Validate rendered manifests against Kubernetes schemas
+    deps: [lint:schemas]
     cmd: bash {{.ROOT_DIR}}/scripts/kubeconform.sh {{.KUBERNETES_DIR}}
     preconditions:
       - sh: test -f {{.ROOT_DIR}}/scripts/kubeconform.sh
         msg: scripts/kubeconform.sh is missing
+
+  # The public CRD catalog kubeconform falls back to lags upstream and rejects
+  # unknown fields outright, so CRDs whose chart version this repo pins get their
+  # schemas generated from that chart instead. Gitignored: regenerating is cheap
+  # and a committed copy would drift from the pinned version.
+  lint:schemas:
+    desc: Generate kubeconform schemas from pinned chart CRDs
+    cmd: bash {{.ROOT_DIR}}/scripts/crd-schemas.sh {{.ROOT_DIR}}/.schemas
+    sources:
+      - "{{.ROOT_DIR}}/scripts/crd-schemas.sh"
+      - "{{.KUBERNETES_DIR}}/apps/volsync-system/volsync/app/helmrelease.yaml"
+    generates:
+      - "{{.ROOT_DIR}}/.schemas/**/*.json"
 
   # Rule 2 in AGENTS.md gives a number, so something has to measure it.
   lint:comments:

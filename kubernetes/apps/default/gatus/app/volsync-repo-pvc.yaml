@@ -1,0 +1,16 @@
+---
+# Interim restic repository for every backed-up PVC in this namespace. VolSync
+# mounts moverVolumes from the mover's own namespace only, so there is one of
+# these per namespace rather than one per cluster. Deleted when the repository
+# moves to R2.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: volsync-repo
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 5Gi

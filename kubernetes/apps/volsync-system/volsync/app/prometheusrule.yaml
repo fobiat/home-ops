@@ -9,11 +9,21 @@ spec:
   groups:
     - name: volsync.rules
       rules:
-        # Both rules below are silent while no ReplicationSource exists, which is
-        # the state this app ships in. The companion `absent()` rule that catches
-        # a deleted or crashlooping controller lands with the first
-        # ReplicationSource, because until then the series is legitimately absent
-        # and the alert would fire on an empty cluster.
+        # A dead controller does not set this to 1, it stops exporting the series
+        # altogether, so a threshold alert would stay silent forever. That is why
+        # absent() is here and why it could only be added once a ReplicationSource
+        # existed to make the series legitimately present.
+        - alert: VolSyncMetricsAbsent
+          expr: absent(volsync_volume_out_of_sync)
+          for: 1h
+          labels:
+            severity: critical
+          annotations:
+            summary: VolSync is exporting no metrics
+            description: >-
+              The VolSync controller is not reporting on any replicated volume.
+              It has most likely been deleted or is crashlooping, which means
+              backups have stopped without any of the other alerts firing.
         - alert: VolSyncVolumeOutOfSync
           expr: volsync_volume_out_of_sync == 1
           for: 1h

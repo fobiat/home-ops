@@ -10,3 +10,6 @@ resources:
   - ./config.yaml
   - ./rbac.yaml
   - ./httproute.yaml
+  - ./volsync-repo-pvc.yaml
+  - ./restic-secret.sops.yaml
+  - ./replicationsource.yaml
