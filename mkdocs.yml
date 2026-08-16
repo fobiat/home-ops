@@ -42,6 +42,7 @@ nav:
       - Restore: runbooks/restore.md
       - Upgrade: runbooks/upgrade.md
       - Troubleshooting: runbooks/troubleshooting.md
+      - Crash storm: runbooks/crash-storm.md
   - Decisions:
       - Overview: adr/README.md
       - 0001 Talos over k3s: adr/0001-talos-over-k3s.md
@@ -50,3 +51,4 @@ nav:
       - 0004 local-path storage: adr/0004-local-path-storage.md
       - 0005 One node: adr/0005-single-node.md
       - 0006 Repository lineage: adr/0006-repository-lineage.md
+      - 0007 Resource requests on critical pods: adr/0007-resource-requests-on-critical-pods.md
