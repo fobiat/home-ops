@@ -1,0 +1,21 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: headlamp
+  namespace: flux-system
+spec:
+  targetNamespace: kube-tools
+  dependsOn:
+    - name: network-gateway
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: headlamp
+  path: ./kubernetes/apps/kube-tools/headlamp/app
+  prune: true
+  wait: true
+  interval: 1h
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system

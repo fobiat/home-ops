@@ -1,0 +1,51 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: headlamp
+spec:
+  interval: 1h
+  url: https://kubernetes-sigs.github.io/headlamp/
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: headlamp
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: headlamp
+      version: 0.44.0
+      sourceRef:
+        kind: HelmRepository
+        name: headlamp
+  # See kube-prometheus-stack's HelmRelease for why remediation/cleanup are set.
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
+  values:
+    # ADR 0008: token login (the chart default), not OIDC (no IdP here) and not
+    # unsafeUseServiceAccountToken (that skips login for anyone who can reach
+    # the Gateway). The identity a user logs in as is the dedicated headlamp-admin
+    # ServiceAccount in rbac.yaml, not this release's own one.
+    #
+    # The release's own ServiceAccount only needs to exist so the pod has an
+    # identity; it never proxies user requests, so it gets neither the chart's
+    # default cluster-admin ClusterRoleBinding nor an automounted token.
+    automountServiceAccountToken: false
+    clusterRoleBinding:
+      create: false
+    # Single node, four cores, mostly idle when nobody is looking at it. See
+    # AGENTS.md rule 7 and ADR 0007.
+    resources:
+      requests:
+        cpu: 20m
+        memory: 96Mi
+      limits:
+        memory: 256Mi
