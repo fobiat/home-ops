@@ -10,4 +10,3 @@ resources:
   - ./config.yaml
   - ./rbac.yaml
   - ./httproute.yaml
-  - ./check-kubernetes-api.yaml

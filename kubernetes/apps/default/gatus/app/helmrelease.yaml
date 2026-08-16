@@ -87,12 +87,15 @@ spec:
             value: ALL
           - name: UNIQUE_FILENAMES
             value: "true"
+        # 64Mi OOMKilled this on every start (exit 137). It is a Python process
+        # holding a Kubernetes watch on ConfigMaps in every namespace, so it costs
+        # far more than the Go binary it feeds.
         resources:
           requests:
             cpu: 10m
-            memory: 32Mi
+            memory: 96Mi
           limits:
-            memory: 64Mi
+            memory: 192Mi
         volumeMounts:
           - name: gatus-endpoints
             mountPath: /gatus-config/endpoints

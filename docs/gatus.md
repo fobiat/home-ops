@@ -48,10 +48,15 @@ data:
 Add the file to that app's `kustomization.yaml` and commit. No change to the Gatus
 HelmRelease itself is needed. `kubernetes/apps/default/homepage/app/gatus-check.yaml`
 and `kubernetes/apps/monitoring/kube-prometheus-stack/app/gatus-check.yaml` are worked
-examples; `kubernetes/apps/default/gatus/app/check-kubernetes-api.yaml` shows a TCP
-check (`tcp://host:port`, condition `[CONNECTED] == true`) for a target that isn't an
-HTTP endpoint and isn't owned by any app directory in this repo, so it lives beside
-Gatus itself instead.
+examples.
+
+The Kubernetes API check is the one exception, and it sits in the base config in
+`kubernetes/apps/default/gatus/app/config.yaml` rather than in a collected ConfigMap.
+Two reasons: no app directory owns the API server, and Gatus panics rather than waits
+if it ever loads a config with no endpoints at all, which is exactly what the sidecar's
+directory looks like for the first few seconds of every start. Keeping one endpoint in
+the base config makes it valid on its own. It also shows the TCP check form
+(`tcp://host:port`, condition `[CONNECTED] == true`) for targets that are not HTTP.
 
 ## DNS
 
