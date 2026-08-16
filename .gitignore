@@ -24,6 +24,7 @@ talos/clusterconfig/
 .venv-docs/
 .direnv/
 .task/
+.schemas/
 site/
 node_modules/
 

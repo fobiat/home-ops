@@ -1,0 +1,41 @@
+---
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: gatus
+spec:
+  sourcePVC: gatus
+  trigger:
+    # UTC. VolSync cronspecs have no timezone field, unlike the CronJobs in
+    # system-backup, so the whole backup window is being moved to UTC.
+    schedule: "0 4 * * *"
+  restic:
+    repository: gatus-restic
+    # local-path is not a CSI driver, so Snapshot and Clone do not exist here.
+    copyMethod: Direct
+    pruneIntervalDays: 14
+    retain:
+      daily: 7
+      weekly: 5
+      monthly: 6
+    cacheCapacity: 1Gi
+    # Talos assigns no UID ranges, so an unadorned mover runs as UID 0 without
+    # DAC_OVERRIDE and cannot read Gatus's 65534-owned files. Copied from the
+    # running pod, not from chart defaults.
+    moverSecurityContext:
+      runAsUser: 65534
+      runAsGroup: 65534
+      fsGroup: 65534
+    # Requests keep the mover Burstable; Talos SIGKILLs BestEffort cgroups first
+    # and a silently killed mover is a silently stopped backup. Immutable field.
+    moverResources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1Gi
+    moverVolumes:
+      - mountPath: repo
+        volumeSource:
+          persistentVolumeClaim:
+            claimName: volsync-repo
