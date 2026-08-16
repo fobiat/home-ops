@@ -16,3 +16,4 @@ resources:
   - ./default
   - ./kube-tools
   - ./system-upgrade
+  - ./network-public
