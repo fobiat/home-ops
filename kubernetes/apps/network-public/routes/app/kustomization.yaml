@@ -1,0 +1,6 @@
+---
+# Empty on purpose. `ls` on this directory is the complete answer to what is
+# public, and Stage 4 adds the first route here.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources: []
