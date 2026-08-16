@@ -34,6 +34,11 @@ jobs:
           path: kubernetes/flux/cluster
           live-branch: main
           resource: ${{ matrix.resource }}
+          # Default 10000 lets a chart that renders many resources (kube-prometheus-stack:
+          # dozens of PrometheusRules, RBAC, etc.) sum to a diff so large the PR-comment
+          # step's own process invocation fails with "Argument list too long". This caps
+          # the worst case; the full diff is always available locally via `task diff`.
+          limit-bytes: 1500
 
       - name: Comment on the PR
         if: steps.diff.outputs.diff != ''
