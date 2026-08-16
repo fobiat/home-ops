@@ -1,0 +1,18 @@
+---
+# The three snapshot.storage.k8s.io CRDs, vendored from
+# https://github.com/kubernetes-csi/external-snapshotter/tree/v8.6.0/client/config/crd,
+# pinned rather than referenced by URL for the same reason as
+# local-path-storage.yaml. No snapshot-controller or CSI driver in this
+# cluster implements them (local-path can't do CSI snapshots), but VolSync's
+# manager binary watches VolumeSnapshot unconditionally at startup and its
+# controller-runtime cache fails to sync when the type isn't registered,
+# crash-looping the whole controller. Installing just the CRDs (types with
+# zero live objects) is the documented upstream fix and is itself
+# functionally inert: nothing can create a VolumeSnapshot without an actual
+# CSI snapshot-capable driver, which this cluster doesn't have.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./snapshot.storage.k8s.io_volumesnapshotclasses.yaml
+  - ./snapshot.storage.k8s.io_volumesnapshotcontents.yaml
+  - ./snapshot.storage.k8s.io_volumesnapshots.yaml
