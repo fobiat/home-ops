@@ -51,6 +51,7 @@ nav:
       - Troubleshooting: runbooks/troubleshooting.md
       - Crash storm: runbooks/crash-storm.md
       - Etcd snapshot restore: runbooks/etcd-restore.md
+      - Data disk remount: runbooks/data-disk-remount.md
   - Decisions:
       - Overview: adr/README.md
       - 0001 Talos over k3s: adr/0001-talos-over-k3s.md
