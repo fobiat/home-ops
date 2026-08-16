@@ -1,0 +1,95 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: alloy
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: alloy
+      version: 1.11.1
+      sourceRef:
+        # Owned by the loki app; both charts come from the same grafana.github.io
+        # repo and sharing one HelmRepository avoids polling it twice.
+        kind: HelmRepository
+        name: grafana
+  values:
+    alloy:
+      # Don't send anonymous usage stats off-cluster.
+      enableReporting: false
+      mounts:
+        # Talos runs a standard kubelet; container logs land under
+        # /var/log/pods same as any other CRI/containerd node, so this
+        # bind-mount is all log collection needs. No dockercontainers mount,
+        # Talos never runs the dockershim.
+        varlog: true
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          memory: 256Mi
+      configMap:
+        content: |
+          discovery.kubernetes "pods" {
+            role = "pod"
+          }
+
+          discovery.relabel "pod_logs" {
+            targets = discovery.kubernetes.pods.targets
+
+            rule {
+              source_labels = ["__meta_kubernetes_namespace"]
+              target_label  = "namespace"
+            }
+
+            rule {
+              source_labels = ["__meta_kubernetes_pod_name"]
+              target_label  = "pod"
+            }
+
+            rule {
+              source_labels = ["__meta_kubernetes_pod_container_name"]
+              target_label  = "container"
+            }
+
+            # pod_uid makes the glob prefix-unique; kubelet names the log
+            # directory <namespace>_<pod>_<uid>.
+            rule {
+              source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
+              separator     = "/"
+              target_label  = "__path__"
+              replacement   = "/var/log/pods/*$1/*.log"
+            }
+          }
+
+          local.file_match "pod_logs" {
+            path_targets = discovery.relabel.pod_logs.output
+          }
+
+          loki.source.file "pod_logs" {
+            targets    = local.file_match.pod_logs.targets
+            forward_to = [loki.process.pod_logs.receiver]
+          }
+
+          loki.process "pod_logs" {
+            forward_to = [loki.write.default.receiver]
+
+            # containerd writes CRI-format lines (timestamp stream flag msg);
+            # this strips the wrapper and uses the real log timestamp.
+            stage.cri {}
+          }
+
+          loki.write "default" {
+            endpoint {
+              url = "http://loki.monitoring.svc.cluster.local:3100/loki/api/v1/push"
+            }
+          }
+    configReloader:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 64Mi

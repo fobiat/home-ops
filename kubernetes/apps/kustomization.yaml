@@ -11,3 +11,4 @@ resources:
   - ./reloader
   - ./local-path-storage
   - ./monitoring
+  - ./default

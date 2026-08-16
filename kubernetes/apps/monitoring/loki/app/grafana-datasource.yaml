@@ -1,0 +1,21 @@
+---
+# Grafana's own k8s-sidecar (deployed by kube-prometheus-stack) watches for
+# ConfigMaps labelled grafana_datasource=1 and loads their contents as
+# datasource provisioning files, so this wires Loki in without touching the
+# kube-prometheus-stack HelmRelease.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasource-loki
+  labels:
+    grafana_datasource: "1"
+data:
+  loki-datasource.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://loki.monitoring.svc.cluster.local:3100
+        jsonData:
+          maxLines: 1000

@@ -21,6 +21,15 @@ spec:
   chartRef:
     kind: OCIRepository
     name: cert-manager
+  # See kube-prometheus-stack's HelmRelease for why remediation/cleanup are set.
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
   values:
     crds:
       enabled: true

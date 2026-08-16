@@ -1,0 +1,73 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: jameswynn
+spec:
+  interval: 1h
+  url: https://jameswynn.github.io/helm-charts
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: homepage
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: homepage
+      version: 2.1.0
+      sourceRef:
+        kind: HelmRepository
+        name: jameswynn
+  # See kube-prometheus-stack's HelmRelease for why remediation/cleanup are set.
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
+  values:
+    # v1.x refuses to serve without this: https://gethomepage.dev/installation/#homepage_allowed_hosts
+    env:
+      - name: HOMEPAGE_ALLOWED_HOSTS
+        value: home.lab.fobiat.dev
+    # Cilium Gateway API handles ingress, not the chart's nginx-flavoured Ingress resource.
+    ingress:
+      main:
+        enabled: false
+    # Single node, four cores. See AGENTS.md rule 7.
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        memory: 128Mi
+    config:
+      settingsString: |
+        title: Home Ops
+        headerStyle: boxed
+        layout:
+          Cluster:
+            style: row
+            columns: 2
+      bookmarks: []
+      services:
+        - Cluster:
+            - Grafana:
+                href: https://grafana.lab.fobiat.dev
+                description: Dashboards and metrics explorer
+            - Prometheus:
+                href: https://prometheus.lab.fobiat.dev
+                description: Metrics and alerting
+      widgets:
+        - resources:
+            backend: resources
+            expanded: true
+            cpu: true
+            memory: true
+        - search:
+            provider: duckduckgo
+            target: _blank

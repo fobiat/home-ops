@@ -56,10 +56,34 @@ releases:
         # See AGENTS.md traps.
         bpf:
           masquerade: false
+        # Talos's OOMController SIGKILLs BestEffort cgroups first, and these
+        # were the cluster's only BestEffort pods, so memory pressure took the
+        # CNI down 60 times on 2026-08-16. Requests alone buy Burstable QoS.
+        # No memory limit on the agent: observed at 163MB RSS, and a cap just
+        # moves the kill to the kernel cgroup OOM killer.
+        resources:
+          requests:
+            cpu: 25m
+            memory: 128Mi
         # Default is 2 replicas with required anti-affinity, which sits Pending
         # forever on one node. See ADR 0005.
         operator:
           replicas: 1
+          # See the cilium-agent resources comment above for why this exists.
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+        # See the cilium-agent resources comment above for why this exists.
+        envoy:
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
         gatewayAPI:
           enabled: true
           enableAlpn: true

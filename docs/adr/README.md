@@ -17,3 +17,4 @@ reading.
 | [0004](0004-local-path-storage.md) | local-path rather than TopoLVM or Longhorn | Accepted |
 | [0005](0005-single-node.md) | One node, and what that gives up | Accepted |
 | [0006](0006-repository-lineage.md) | Building v3 on the 2021 repository | Accepted |
+| [0007](0007-resource-requests-on-critical-pods.md) | Resource requests on cluster-critical pods, never BestEffort QoS | Accepted |
