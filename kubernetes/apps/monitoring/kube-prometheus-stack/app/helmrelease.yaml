@@ -20,6 +20,23 @@ spec:
       sourceRef:
         kind: HelmRepository
         name: prometheus-community
+  # Flux defaults to zero remediation retries, so this chart's very first
+  # install timed out waiting on a StatefulSet and Flux gave up permanently
+  # (Stalled=True, RetriesExceeded) with no way to self-recover. Retries plus
+  # cleanupOnFail let a failed install/upgrade retry cleanly instead of
+  # getting stuck; timeout is raised because Grafana's image pull alone has
+  # taken over 7 minutes here. Same convention applies to every other
+  # HelmRelease in this repo, without repeating this comment there.
+  install:
+    timeout: 15m
+    remediation:
+      retries: 3
+  upgrade:
+    timeout: 15m
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
   values:
     defaultRules:
       rules:
@@ -29,10 +46,55 @@ spec:
         etcd: false
         kubeProxy: false
         windows: false
-    # Deferred to phase two: Alertmanager to Discord via native discord_configs.
-    # Nothing to route alerts to yet, so nothing running with no function.
     alertmanager:
+      # Config below is complete and ready, but stays off until the home-ops
+      # Discord webhook exists and is committed as
+      # alertmanager-discord-webhook.sops.yaml. Enabling it first would leave
+      # the pod in CreateContainerConfigError on the missing secret mount.
       enabled: false
+      alertmanagerSpec:
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
+        storage:
+          volumeClaimTemplate:
+            spec:
+              storageClassName: local-path
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 2Gi
+        # Webhook URL is SOPS-encrypted (alertmanager-discord-webhook.sops.yaml)
+        # and mounted as a file rather than inlined here, since HelmRelease
+        # values are plaintext in git.
+        secrets:
+          - alertmanager-discord-webhook
+      config:
+        global:
+          resolve_timeout: 5m
+        route:
+          group_by: ['namespace', 'alertname']
+          group_wait: 30s
+          group_interval: 5m
+          repeat_interval: 12h
+          receiver: discord
+          routes:
+            # Watchdog is a dead-man's-switch that fires continuously; drop it
+            # so Discord isn't pinged every group_interval forever.
+            - receiver: 'null'
+              matchers:
+                - alertname = "Watchdog"
+        receivers:
+          - name: 'null'
+          - name: discord
+            discord_configs:
+              - webhook_url_file: /etc/alertmanager/secrets/alertmanager-discord-webhook/webhook-url
+        templates:
+          - '/etc/alertmanager/config/*.tmpl'
     kubeProxy:
       enabled: false
     # Deferred alongside the etcd default rules above.
@@ -44,14 +106,46 @@ spec:
           cpu: 10m
           memory: 64Mi
         limits:
-          memory: 128Mi
+          memory: 96Mi
+      # Sidecar in the Prometheus pod that reloads config/rules without a
+      # restart. Chart leaves it unset by default, which makes it BestEffort.
+      prometheusConfigReloader:
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            memory: 32Mi
+      admissionWebhooks:
+        patch:
+          # One-shot Job that patches the webhook CA bundle on install/upgrade.
+          # Unset by chart default, which makes it BestEffort.
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              memory: 32Mi
     prometheus:
       prometheusSpec:
+        # Chart default is 10d. 7d covers week-over-week comparison without
+        # the head/WAL cost of the full default.
+        retention: 7d
+        # Hard cap independent of the time-based retention above, so a stalled
+        # compaction can't fill the PVC.
+        retentionSize: 6GB
+        # Default is 30s. Doubling the interval roughly halves sample/WAL
+        # churn, which is the main lever available without dropping targets.
+        scrapeInterval: 60s
+        evaluationInterval: 60s
         resources:
           requests:
             cpu: 100m
             memory: 512Mi
           limits:
+            # RSS was climbing past 420Mi before the node OOMed, so a limit
+            # near that would just move the crash into this pod. The limit
+            # exists to contain a leak, not to ration.
             memory: 1Gi
         storageSpec:
           volumeClaimTemplate:
@@ -61,12 +155,20 @@ spec:
                 - ReadWriteOnce
               resources:
                 requests:
+                  # Comfortably above retentionSize so compaction has room.
                   storage: 10Gi
     grafana:
       admin:
         existingSecret: grafana-admin-credentials
         userKey: admin-user
         passwordKey: admin-password
+      # Chart's own ingress/route hosting is off; a hand-written HTTPRoute
+      # attaches to the shared internal Gateway instead. domain/root_url
+      # still need setting explicitly so redirects and asset URLs are correct.
+      grafana.ini:
+        server:
+          domain: grafana.lab.fobiat.dev
+          root_url: "https://grafana.lab.fobiat.dev"
       persistence:
         enabled: true
         type: sts
@@ -76,21 +178,45 @@ spec:
         size: 2Gi
       resources:
         requests:
-          cpu: 10m
-          memory: 128Mi
+          cpu: 200m
+          memory: 224Mi
         limits:
-          memory: 256Mi
+          # Grafana 13 was OOMKilled at 256Mi during boot (apiserver/unified-
+          # storage registers ~20 GroupVersions). 384Mi clears that with room.
+          memory: 384Mi
+      sidecar:
+        # Both sidecars stay on: dashboards loads the stack's bundled
+        # dashboards, datasources wires up Prometheus. ~82Mi observed each.
+        resources:
+          requests:
+            cpu: 10m
+            memory: 48Mi
+          limits:
+            memory: 128Mi
+      # Grafana 13's apiserver/unified-storage boot registers ~20 GroupVersions
+      # and needs real CPU to do it quickly; 10m starved it under contention on
+      # talos-1 and the default probes killed it mid-boot before it could listen.
+      livenessProbe:
+        initialDelaySeconds: 90
+        periodSeconds: 10
+        timeoutSeconds: 30
+        failureThreshold: 10
+      readinessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 10
+        timeoutSeconds: 10
+        failureThreshold: 6
     kube-state-metrics:
       resources:
         requests:
           cpu: 10m
           memory: 32Mi
         limits:
-          memory: 128Mi
+          memory: 64Mi
     prometheus-node-exporter:
       resources:
         requests:
           cpu: 10m
           memory: 32Mi
         limits:
-          memory: 64Mi
+          memory: 48Mi
