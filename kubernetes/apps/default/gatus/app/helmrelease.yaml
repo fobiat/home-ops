@@ -1,0 +1,98 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: twin
+spec:
+  interval: 1h
+  url: https://twin.github.io/helm-charts
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: gatus
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: gatus
+      version: 1.5.0
+      sourceRef:
+        kind: HelmRepository
+        name: twin
+  # See kube-prometheus-stack's HelmRelease for why remediation/cleanup are set.
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
+  values:
+    serviceAccount:
+      # k8s-sidecar needs its own token to list/watch ConfigMaps cluster-wide.
+      # See rbac.yaml for the ClusterRole granted to this service account.
+      create: true
+      autoMount: true
+    # Cilium Gateway API handles ingress, not the chart's own route.yaml.
+    gateway:
+      route:
+        enabled: false
+    persistence:
+      enabled: true
+      size: 1Gi
+      mountPath: /data
+      storageClassName: local-path
+    # Single node, four cores. See AGENTS.md rule 7.
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 64Mi
+    env:
+      # Directory, not a file: Gatus merges every *.yaml/*.yml under it and its
+      # subdirectories (see docs/gatus.md), rather than reading one config file.
+      GATUS_CONFIG_PATH: /gatus-config
+    # The chart's own generated ConfigMap (from `config:`, unused here) still
+    # mounts read-only at /config; these two mounts are what GATUS_CONFIG_PATH
+    # actually points at. gatus-base-config carries storage/ui settings.
+    # gatus-endpoints is an emptyDir the sidecar below writes into.
+    extraVolumeMounts:
+      - name: gatus-base-config
+        mountPath: /gatus-config/base
+        readOnly: true
+        existingConfigMap: gatus-base-config
+      - name: gatus-endpoints
+        mountPath: /gatus-config/endpoints
+        readOnly: true
+    # kiwigrid/k8s-sidecar watches every namespace for ConfigMaps labelled
+    # gatus.io/enabled=true and writes their data keys into /gatus-config/endpoints.
+    # Gatus notices the new files on its own periodic mtime check and merges them
+    # in without a restart. See docs/gatus.md for how an app adds a check.
+    sidecarContainers:
+      k8s-sidecar:
+        image: quay.io/kiwigrid/k8s-sidecar:2.10.1
+        env:
+          - name: LABEL
+            value: gatus.io/enabled
+          - name: LABEL_VALUE
+            value: "true"
+          - name: FOLDER
+            value: /gatus-config/endpoints
+          - name: RESOURCE
+            value: configmap
+          - name: NAMESPACE
+            value: ALL
+          - name: UNIQUE_FILENAMES
+            value: "true"
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
+        volumeMounts:
+          - name: gatus-endpoints
+            mountPath: /gatus-config/endpoints

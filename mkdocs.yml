@@ -40,6 +40,7 @@ nav:
   - Bootstrap: bootstrap.md
   - Headlamp access: headlamp.md
   - Grafana dashboards: monitoring-dashboards.md
+  - Gatus: gatus.md
   - Runbooks:
       - Restore: runbooks/restore.md
       - Upgrade: runbooks/upgrade.md

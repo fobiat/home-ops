@@ -1,0 +1,13 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+components:
+  # PVC for the sqlite store needs the privileged namespace label, same
+  # reason kube-prometheus-stack and loki need it in monitoring.
+  - ../../../../components/namespace-privileged
+resources:
+  - ./helmrelease.yaml
+  - ./config.yaml
+  - ./rbac.yaml
+  - ./httproute.yaml
+  - ./check-kubernetes-api.yaml

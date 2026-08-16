@@ -6,3 +6,4 @@ components:
 resources:
   - ./helmrelease.yaml
   - ./httproute.yaml
+  - ./gatus-check.yaml
