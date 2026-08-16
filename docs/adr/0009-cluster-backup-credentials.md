@@ -45,6 +45,12 @@ on by default for any cluster bootstrapped since v0.11, which this one was. That
 both CronJobs use. The ServiceAccount CRD path is a reasonable thing to revisit the next
 time `talos/` changes for its own, unrelated reason.
 
+**Superseded for the machine-config job by ADR 0011.** tuppr's machine config edit
+(ADR 0010) was that unrelated reason. The `machineconfig-backup` job now uses the
+ServiceAccount CRD instead of the static certificate described above; the reasoning here
+still explains why it originally didn't, and still applies in full to the etcd-snapshot
+job, which was not moved.
+
 **Roles: as narrow as Talos allows, which is not equally narrow for both jobs.**
 Talos's RBAC has four roles: `os:admin` (everything), `os:operator` (`os:reader` plus
 reboot, shutdown, etcd backup and etcd alarm management), `os:reader` (safe read-only

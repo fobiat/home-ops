@@ -1,6 +1,7 @@
 ---
-# Suspended until talos-machineconfig-backup.PLACEHOLDER.yaml has been turned into a
-# real secret. See that file and ADR 0009.
+# Credential comes from talos-serviceaccount.yaml, minted automatically by Talos.
+# See ADR 0009 for why this job needs os:admin, and ADR 0011 for why the
+# credential is a ServiceAccount CRD rather than a SOPS-committed static cert.
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -12,7 +13,7 @@ spec:
   startingDeadlineSeconds: 300
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
-  suspend: true
+  suspend: false
   jobTemplate:
     spec:
       backoffLimit: 2
@@ -104,7 +105,11 @@ spec:
               emptyDir: {}
             - name: talos-credentials
               secret:
-                secretName: talos-machineconfig-backup
+                secretName: machineconfig-backup-talosconfig
+                # Talos mints this Secret with the key "config", not "talosconfig".
+                items:
+                  - key: config
+                    path: talosconfig
             - name: backup-data
               persistentVolumeClaim:
                 claimName: cluster-backup-data

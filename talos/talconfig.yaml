@@ -83,8 +83,8 @@ controlPlane:
                 - bind
                 - rshared
                 - rw
-    # Grants tuppr's ServiceAccount CRD a standing os:admin credential, scoped to the
-    # system-upgrade namespace only. See ADR 0010 and docs/runbooks/tuppr-upgrade.md.
+    # Grants a standing os:admin credential to tuppr and the cluster-backup
+    # machine-config job's ServiceAccount CRDs. See ADR 0010 and ADR 0011.
     - |-
       machine:
         features:
@@ -94,3 +94,4 @@ controlPlane:
               - os:admin
             allowedKubernetesNamespaces:
               - system-upgrade
+              - system-backup

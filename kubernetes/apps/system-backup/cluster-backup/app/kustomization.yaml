@@ -9,3 +9,4 @@ resources:
   - ./pvc.yaml
   - ./cronjob-etcd-snapshot.yaml
   - ./cronjob-machineconfig.yaml
+  - ./talos-serviceaccount.yaml
