@@ -54,8 +54,8 @@ spec:
               target_label  = "container"
             }
 
-            # pod_uid makes the glob prefix-unique; kubelet names the log
-            # directory <namespace>_<pod>_<uid>.
+            // pod_uid makes the glob prefix-unique; kubelet names the log
+            // directory <namespace>_<pod>_<uid>.
             rule {
               source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
               separator     = "/"
@@ -76,8 +76,8 @@ spec:
           loki.process "pod_logs" {
             forward_to = [loki.write.default.receiver]
 
-            # containerd writes CRI-format lines (timestamp stream flag msg);
-            # this strips the wrapper and uses the real log timestamp.
+            // containerd writes CRI-format lines (timestamp stream flag msg);
+            // this strips the wrapper and uses the real log timestamp.
             stage.cri {}
           }
 
