@@ -68,3 +68,18 @@ controlPlane:
         scheduler:
           extraArgs:
             bind-address: 0.0.0.0
+    # The kubelet runs in its own restricted mount namespace, so a UserVolumeConfig
+    # mount isn't visible to it, or to hostPath volumes in pods, without this.
+    # local-path-provisioner's helper pods failed with "read-only file system" on
+    # /var/mnt/data until this was added.
+    - |-
+      machine:
+        kubelet:
+          extraMounts:
+            - destination: /var/mnt/data
+              type: bind
+              source: /var/mnt/data
+              options:
+                - bind
+                - rshared
+                - rw
