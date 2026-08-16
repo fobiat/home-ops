@@ -21,3 +21,6 @@ ignore: |
   talos/**/*.sops.yaml
   # flux bootstrap regenerates this, never hand-edited
   **/gotk-components.yaml
+  # vendored upstream CRDs, never hand-edited; their generated
+  # description fields run well past 120 characters
+  **/volsync-system/snapshot-controller-crds/app/*.yaml
