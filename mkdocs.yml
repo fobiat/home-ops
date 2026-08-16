@@ -64,3 +64,4 @@ nav:
       - 0009 Cluster backup credentials: adr/0009-cluster-backup-credentials.md
       - 0010 tuppr upgrades: adr/0010-tuppr-upgrades.md
       - 0011 reconcile backup credential onto ServiceAccount CRD: adr/0011-reconcile-backup-credential-onto-serviceaccount-crd.md
+      - 0012 Data disk never mounted: adr/0012-data-disk-never-mounted.md

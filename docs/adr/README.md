@@ -22,3 +22,4 @@ reading.
 | [0009](0009-cluster-backup-credentials.md) | Etcd snapshots and machine-config backups from in-cluster CronJobs | Accepted |
 | [0010](0010-tuppr-upgrades.md) | tuppr for Talos and Kubernetes upgrades | Accepted |
 | [0011](0011-reconcile-backup-credential-onto-serviceaccount-crd.md) | Reconcile the machine-config backup credential onto the ServiceAccount CRD | Accepted |
+| [0012](0012-data-disk-never-mounted.md) | The data disk was never mounted, and minSize is why | Accepted |
