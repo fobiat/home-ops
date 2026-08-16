@@ -6,3 +6,4 @@ resources:
   - ./gatus/ks.yaml
   - ./gatus-restore/ks.yaml
   - ./docs-proxy/ks.yaml
+  - ./netpol/ks.yaml

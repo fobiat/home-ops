@@ -1,0 +1,12 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-gateway-ingress
+spec:
+  # Gateway-proxied requests arrive as reserved:ingress, an identity no
+  # standard NetworkPolicy selector can match. See ADR 0013.
+  endpointSelector: {}
+  ingress:
+    - fromEntities:
+        - ingress
