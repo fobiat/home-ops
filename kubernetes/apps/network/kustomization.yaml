@@ -8,3 +8,4 @@ resources:
   - ./external-dns/ks.yaml
   - ./netpol/ks.yaml
   - ./gateway-guard/ks.yaml
+  - ./cloudflared/ks.yaml
