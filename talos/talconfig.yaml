@@ -83,3 +83,14 @@ controlPlane:
                 - bind
                 - rshared
                 - rw
+    # Grants tuppr's ServiceAccount CRD a standing os:admin credential, scoped to the
+    # system-upgrade namespace only. See ADR 0010 and docs/runbooks/tuppr-upgrade.md.
+    - |-
+      machine:
+        features:
+          kubernetesTalosAPIAccess:
+            enabled: true
+            allowedRoles:
+              - os:admin
+            allowedKubernetesNamespaces:
+              - system-upgrade
