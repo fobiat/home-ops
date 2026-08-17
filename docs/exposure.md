@@ -27,9 +27,12 @@ the rate-limit rule before creating the DNS record.
    targets `50e8490f-820b-4e20-a076-65254e8ad157.cfargotunnel.com`.
 2. Spend the zone's one free-tier rate-limit rule on the ingest endpoint:
    - Expression: `(http.host eq "insights.fobiat.dev" and http.request.uri.path eq "/api/send")`
-   - Characteristic: source IP
+   - Characteristics: `cf.colo.id` and source IP. Cloudflare requires its
+     colocation ID because it counts limits at the edge.
    - Rate: 20 requests per 10 seconds
-   - Action: block for 60 seconds
+   - Action: block for 60 seconds. The current zone entitlement rejects this
+     duration and permits only 10 seconds, so do not create the CNAME until
+     that limitation is accepted or the entitlement changes.
 3. Do not add Bot Fight Mode or a challenge to this hostname. The tracker sends
    background requests, so either would break collection for real visitors.
 
