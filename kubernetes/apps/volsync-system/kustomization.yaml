@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - ./snapshot-controller-crds/ks.yaml
   - ./volsync/ks.yaml
+  - ./netpol/ks.yaml

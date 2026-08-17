@@ -95,5 +95,7 @@ The Gateway is a bypass for any LAN service that already has a route. A compromi
 pod that cannot reach a Service directly can still reach it by its
 `lab.fobiat.dev` hostname, arriving back at the backend as `reserved:ingress`.
 
-`system-backup` and `volsync-system` have no NetworkPolicy yet. Both hold restic
-credentials, and volsync's controller can read every backed-up PVC.
+`system-backup` and `volsync-system` have the same default-deny ingress baseline
+as the other protected namespaces. VolSync's metrics endpoint is the only
+cross-namespace exception, and only Prometheus in `monitoring` can reach it.
+Egress remains unrestricted, including the Talos API and restic destinations.

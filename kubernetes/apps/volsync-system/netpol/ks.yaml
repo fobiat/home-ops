@@ -1,0 +1,21 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: volsync-system-netpol
+  namespace: flux-system
+spec:
+  targetNamespace: volsync-system
+  dependsOn:
+    - name: volsync
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: volsync-system-netpol
+  path: ./kubernetes/apps/volsync-system/netpol/app
+  prune: true
+  wait: true
+  interval: 1h
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
