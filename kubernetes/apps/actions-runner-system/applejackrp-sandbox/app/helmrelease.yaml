@@ -85,10 +85,20 @@ spec:
             # ResourceQuota and LimitRange in ../controller/app bound the
             # per-step job pods this mode spawns; this bounds the runner's
             # own control pod.
+            # In containerMode: kubernetes the actual work (npm/cargo/dotnet/
+            # etc.) runs in a *separate* job-container pod this control pod
+            # spawns via /home/runner/k8s/index.js; this one just polls and
+            # orchestrates. Discovered live that it was sized the same as a
+            # real workload (500m), so a job's pod pair (this + its job
+            # container) cost 1000m of the namespace's 2000m ResourceQuota
+            # before any actual work started — two concurrent jobs across
+            # repos was enough to exhaust it outright ("failed to create job
+            # pod: exceeded quota"), not just queue politely. Cut to what
+            # orchestration actually needs.
             resources:
               requests:
-                cpu: 100m
-                memory: 256Mi
+                cpu: 25m
+                memory: 128Mi
               limits:
-                cpu: 500m
-                memory: 1Gi
+                cpu: 250m
+                memory: 512Mi
