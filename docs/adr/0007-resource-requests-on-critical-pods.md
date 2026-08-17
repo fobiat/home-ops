@@ -42,6 +42,13 @@ system-disk reads and 80% I/O pressure. Control-plane and application probes the
 timed out together. The cgroup counters recorded more than a billion direct
 reclaim scans and file-cache refaults in each container without an OOM kill.
 
+Raising those two limits exposed the same defect in the original resource pass.
+External-dns, Reloader, Prometheus' config reloader, kube-state-metrics and Gatus
+had 32Mi or 64Mi limits and millions of direct reclaim scans. Homepage sat at
+95% of 128Mi with the same pattern. Cilium operator became a top reader when
+global pressure returned. The limits had been guessed from anonymous memory and
+did not include the executable and active file cache.
+
 Immediate fix: the monitoring stack was scaled to zero to break the loop, then the
 VM's memory was raised from 4GB to 8GB (7918MB total). OOM trigger count went to 0
 and all 20 pods returned to Running.
@@ -59,6 +66,11 @@ Grafana and Alloy also need limits large enough to retain their active file-cach
 working sets. Their limits are 768Mi and 1Gi respectively, with requests based
 on observed steady-state use. Alloy filled a 512Mi follow-up limit within minutes
 and resumed direct reclaim, so that intermediate value was not retained.
+
+The other affected controllers use measured headroom rather than the old 32Mi to
+128Mi caps. Requests still describe normal scheduling demand. Limits are checked
+against cgroup `memory.events`, direct scans and file-cache refaults during a live
+stability watch before a value is accepted.
 
 ## Consequences
 

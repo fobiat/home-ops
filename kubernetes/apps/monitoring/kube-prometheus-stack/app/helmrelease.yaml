@@ -113,9 +113,9 @@ spec:
         resources:
           requests:
             cpu: 10m
-            memory: 16Mi
-          limits:
             memory: 32Mi
+          limits:
+            memory: 128Mi
       admissionWebhooks:
         patch:
           # One-shot Job that patches the webhook CA bundle on install/upgrade.
@@ -210,9 +210,9 @@ spec:
       resources:
         requests:
           cpu: 10m
-          memory: 32Mi
-        limits:
           memory: 64Mi
+        limits:
+          memory: 256Mi
     prometheus-node-exporter:
       resources:
         requests:

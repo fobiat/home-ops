@@ -42,9 +42,9 @@ spec:
     resources:
       requests:
         cpu: 10m
-        memory: 64Mi
-      limits:
         memory: 128Mi
+      limits:
+        memory: 512Mi
     # Cluster-scoped, read-only get/list on namespaces/pods/nodes/ingresses/
     # HTTPRoutes/gateways, needed for config.kubernetes discovery below.
     enableRbac: true
