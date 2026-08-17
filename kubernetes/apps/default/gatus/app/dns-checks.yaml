@@ -1,0 +1,35 @@
+---
+# The DNS "cheap half" from PHASE-TWO.md: proving the Pi Zero W's AdGuard
+# Home resolver actually does what the rest of the LAN depends on, without
+# building an in-cluster replica.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gatus-check-dns
+  labels:
+    gatus.io/enabled: "true"
+data:
+  dns.yaml: |
+    endpoints:
+      - name: dns-recursion-dnssec
+        group: cluster
+        url: "192.168.0.10"
+        interval: 1m
+        dns:
+          query-name: "dnssec-failed.org"
+          query-type: "A"
+        conditions:
+          # dnssec-failed.org is a deliberately broken DNSSEC test domain.
+          # SERVFAIL here means the Pi both reached an upstream recursively
+          # and validated (and rejected) the bad signature.
+          - "[DNS_RCODE] == SERVFAIL"
+      - name: dns-external-dns-path
+        group: cluster
+        url: "192.168.0.10"
+        interval: 1m
+        dns:
+          query-name: "grafana.lab.fobiat.dev"
+          query-type: "A"
+        conditions:
+          - "[DNS_RCODE] == NOERROR"
+          - "[BODY] == 192.168.0.240"
