@@ -35,6 +35,13 @@ The trigger was `kube-prometheus-stack` 88.3.0, installed at 00:23:51 on a 4GB V
 before that install. The first OOM kill followed at 00:32:48. `kube-apiserver`
 alone held 823MB RSS; Prometheus was at 420MB and still climbing.
 
+A second failure on 2026-08-17 came from limits that were too low rather than an
+OOM. Grafana sat at its 384Mi cgroup cap and Alloy at 256Mi. Their file-cache
+working sets were reclaimed and reread continuously, producing about 2.2GB/s of
+system-disk reads and 80% I/O pressure. Control-plane and application probes then
+timed out together. The cgroup counters recorded more than a billion direct
+reclaim scans and file-cache refaults in each container without an OOM kill.
+
 Immediate fix: the monitoring stack was scaled to zero to break the loop, then the
 VM's memory was raised from 4GB to 8GB (7918MB total). OOM trigger count went to 0
 and all 20 pods returned to Running.
@@ -48,6 +55,9 @@ it selects which cgroup gets SIGKILLed first under memory pressure.
 
 Cilium's agent, operator and envoy now set requests in `bootstrap/helmfile.yaml`.
 kube-prometheus-stack was retuned so no container in it is BestEffort either.
+Grafana and Alloy also need limits large enough to retain their active file-cache
+working sets. Their limits are 768Mi and 512Mi respectively, with requests based
+on observed steady-state use.
 
 ## Consequences
 
@@ -60,6 +70,11 @@ Bad: a request reserves memory whether or not it is used, on a node that was
 already tight before the RAM increase. Every component added to the cluster from
 here needs its resource footprint checked against what is left, not just against
 whether it schedules.
+
+A low memory limit can still take this node down without an OOM. Direct reclaim
+can saturate the system disk until leader elections and health probes fail. Limit
+changes therefore require checking cgroup `memory.events` and `memory.stat`, not
+only RSS and restart reasons.
 
 This does not fix the underlying constraint that one node's memory is shared
 across the entire control plane and every workload. It only makes sure that when
