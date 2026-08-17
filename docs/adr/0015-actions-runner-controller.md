@@ -10,10 +10,10 @@ public and saves nothing here. `AppleJackRP-sandbox` is private and real workflo
 it, so it is the actual reason phase three's runner work exists at all, named directly in
 `PLAN.md`. Kyle's call on 2026-08-17 extended the scope to every private repo with a real
 CI pipeline today, not just the one `PLAN.md` named: `Rivet` and `rivet-workstation` (both
-Rust, cargo build/test/clippy) join `AppleJackRP-sandbox`. Private repos without an
-existing pipeline (`agents-configs`, `cairn`, `blog`, `random-things`, `openDVS`,
-`Ohmic-Labs`) were deliberately left out; a repo with no CI today gains nothing from a
-faster runner.
+Rust, cargo build/test/clippy) and `cairn` (TypeScript, its own `ci.yml`) join
+`AppleJackRP-sandbox`. Private repos without an existing pipeline (`agents-configs`,
+`blog`, `random-things`, `openDVS`, `Ohmic-Labs`) were deliberately left out; a repo with
+no CI today gains nothing from a faster runner.
 
 Three shapes were on the table.
 
@@ -32,25 +32,25 @@ deprecated.
 
 ## Decision
 
-Ship the controller live (`kubernetes/apps/actions-runner-system/controller/`) and three
+Ship the controller live (`kubernetes/apps/actions-runner-system/controller/`) and four
 runner scale sets, one per repo (`applejackrp-sandbox/`, `rivet/`,
-`rivet-workstation/`), each shipped `spec.suspend: true` until a real GitHub App
-credential exists. Adding a fourth private repo later means copying one of these app
+`rivet-workstation/`, `cairn/`), each shipped `spec.suspend: true` until a real GitHub App
+credential exists. Adding a fifth private repo later means copying one of these app
 directories with a new `githubConfigUrl`, `OCIRepository`/`HelmRelease` name and `ks.yaml`
 entry, not a new controller and not necessarily a new App (see below).
 
-### Auth: one GitHub App, installed on all three repos, not a PAT
+### Auth: one GitHub App, installed on all four repos, not a PAT
 
 A PAT is user-scoped and expires, taking every runner down with it when it does (the
 exact failure `PLAN.md` calls out). A GitHub App does not expire and its private key can
 be rotated without touching any runner set's config.
 
-**One App shared across all three repos, not three separate Apps.** A GitHub App
+**One App shared across all four repos, not four separate Apps.** A GitHub App
 installed with "Only select repositories" covers every repo chosen under one
 Installation ID, so one App ID / Installation ID / private key triple works for all
-three `githubConfigSecret` references. The alternative, a separate App per repo, gives
-each repo its own blast radius if a credential leaks, at the cost of three App
-registrations, three private keys and three rotation schedules to track instead of one.
+four `githubConfigSecret` references. The alternative, a separate App per repo, gives
+each repo its own blast radius if a credential leaks, at the cost of four App
+registrations, four private keys and four rotation schedules to track instead of one.
 For a single-operator homelab that overhead buys little: rule 12 (prefer boring) and the
 same reasoning ADR 0010 gave for tuppr's `os:admin` credential (concentrating access in
 one place a person already has to trust, rather than multiplying credentials for their
@@ -92,25 +92,25 @@ AGENTS.md rule 7. A build that would exceed the quota does not take anything dow
 pod simply stays `Pending` until room frees up.
 
 This quota is deliberately namespace-wide rather than per-scale-set, which matters now
-that there are three. `maxRunners: 2` on each of the three `AutoscalingRunnerSet`s is a
-local, per-repo cap; nothing coordinates between them, so in principle all three could
+that there are four. `maxRunners: 2` on each of the four `AutoscalingRunnerSet`s is a
+local, per-repo cap; nothing coordinates between them, so in principle all four could
 try to scale to 2 at once. The shared quota is what actually stops that from mattering:
 whichever pods land first get the room, the rest queue as `Pending` rather than the node
-seeing three repos' worth of unbounded concurrent builds. `maxRunners: 2` per repo, per
+seeing four repos' worth of unbounded concurrent builds. `maxRunners: 2` per repo, per
 `PLAN.md`'s explicit "start at 2," stays the same regardless of repo count.
 
 ### Suspended until the credential exists
 
 The GitHub App does not exist yet, and creating one, generating its private key and
-installing it on all three repos are all steps only Kyle can do (same shape as the R2
+installing it on all four repos are all steps only Kyle can do (same shape as the R2
 bucket, healthchecks.io check and Discord webhook before it). Each `helmrelease.yaml`
 ships fully wired, `spec.suspend: true`, alongside
 `controller/app/github-app.PLACEHOLDER.yaml`, which spells out the exact `sops`
 encryption step, the same pattern ADR 0009 used for the etcd and machine-config backup
 credentials and the alertmanager Discord webhook. `docs/runbooks/actions-runner-controller.md`
-has the full walkthrough, including the GitHub App creation steps themselves. The three
+has the full walkthrough, including the GitHub App creation steps themselves. The four
 scale sets can be unsuspended independently once the shared secret exists; nothing
-requires flipping all three at once.
+requires flipping all four at once.
 
 ### Not yet proven on Talos
 
@@ -123,16 +123,16 @@ run against this scale set as the point this gets proven, not this PR.
 
 ## Consequences
 
-Good: `AppleJackRP-sandbox`, `Rivet` and `rivet-workstation` all get runners with more
-than two cores and no minutes ceiling, on one credential that does not expire. The
-resource guardrails are namespace-wide, so the next private repo's scale set inherits
-them automatically rather than needing its own copy, and one App install covers a fourth
+Good: `AppleJackRP-sandbox`, `Rivet`, `rivet-workstation` and `cairn` all get runners
+with more than two cores and no minutes ceiling, on one credential that does not expire.
+The resource guardrails are namespace-wide, so the next private repo's scale set inherits
+them automatically rather than needing its own copy, and one App install covers a fifth
 repo too if it is added to the same install rather than needing a new one.
 
 Bad: two deliberate, manual steps sit between this PR and a working runner: the GitHub
-App has to be created and installed on all three repos by hand, and the first real
+App has to be created and installed on all four repos by hand, and the first real
 workflow run on each is the only way to confirm `containerMode: kubernetes` behaves as
-documented on this specific node. Until both happen, all three scale sets are suspended
+documented on this specific node. Until both happen, all four scale sets are suspended
 HelmReleases doing nothing, the same shape ADR 0010 accepted for tuppr's controller. The
 shared App is also a shared blast radius: a leaked key gives Administration write access
-to all three repos at once, not just one, the trade-off named above.
+to all four repos at once, not just one, the trade-off named above.

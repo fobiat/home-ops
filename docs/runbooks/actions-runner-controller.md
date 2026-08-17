@@ -8,11 +8,12 @@
     GitHub App. See ADR 0015.
 
 The controller and its resource guardrails are live once
-`kubernetes/apps/actions-runner-system` is merged. Three runner scale sets
+`kubernetes/apps/actions-runner-system` is merged. Four runner scale sets
 ship alongside it, each `spec.suspend: true`, one per private repo with a
-real CI pipeline today: `fobiat/AppleJackRP-sandbox`, `fobiat/Rivet` and
-`fobiat/rivet-workstation`. All three reference one shared GitHub App that
-does not exist yet. This is how you create it and turn the scale sets on.
+real CI pipeline today: `fobiat/AppleJackRP-sandbox`, `fobiat/Rivet`,
+`fobiat/rivet-workstation` and `fobiat/cairn`. All four reference one shared
+GitHub App that does not exist yet. This is how you create it and turn the
+scale sets on.
 
 ## Step 1: create the GitHub App
 
@@ -36,21 +37,21 @@ does not exist yet. This is how you create it and turn the scale sets on.
    - Under "Private keys", **Generate a private key**. This downloads a
      `.pem` file once; it cannot be re-downloaded, only regenerated.
 
-## Step 2: install the App on all three repos
+## Step 2: install the App on all four repos
 
 1. On the App's settings page, open **Install App**.
 2. Install it on the `fobiat` account, **Only select repositories**:
-   `AppleJackRP-sandbox`, `Rivet`, `rivet-workstation`. Do not select "All
-   repositories." (A repo can be added to this same installation later from
-   the same page, without creating a second App.)
+   `AppleJackRP-sandbox`, `Rivet`, `rivet-workstation`, `cairn`. Do not
+   select "All repositories." (A repo can be added to this same
+   installation later from the same page, without creating a second App.)
 3. After installing, the URL bar shows
    `https://github.com/settings/installations/<INSTALLATION_ID>`. That
-   number is the **Installation ID**, shared by all three repos since they
+   number is the **Installation ID**, shared by all four repos since they
    are one installation.
 
 ## Step 3: encrypt the credential
 
-One secret, shared by all three `helmrelease.yaml`s, same shape as every
+One secret, shared by all four `helmrelease.yaml`s, same shape as every
 other credential this repo has staged this way (ADR 0009's backup
 certificates, `alertmanager-discord-webhook.PLACEHOLDER.yaml`):
 
@@ -72,10 +73,11 @@ Then:
 
 1. Add `./github-app.sops.yaml` to this directory's `kustomization.yaml`
    (uncomment the line already there).
-2. Set `spec.suspend` to `false` in whichever of the three scale sets'
+2. Set `spec.suspend` to `false` in whichever of the four scale sets'
    `helmrelease.yaml` files are ready to go live. They do not have to move
    together; unsuspending `applejackrp-sandbox/app/helmrelease.yaml` alone
-   first, to prove the pattern before flipping the other two, is reasonable.
+   first, to prove the pattern before flipping the other three, is
+   reasonable.
 3. Delete `github-app.PLACEHOLDER.yaml`.
 4. Delete the local `.pem` file once it is encrypted into Git; it should not
    sit on disk outside the SOPS file.
@@ -100,10 +102,10 @@ its scale set as a runner group.
 
 ## Step 5: prove it with a real workflow
 
-Trigger any workflow in one of the three repos with
+Trigger any workflow in one of the four repos with
 `runs-on: <scale-set-name>` (the scale set name defaults to the Helm
-release name: `applejackrp-sandbox-runners`, `rivet-runners` or
-`rivet-workstation-runners`). Watch:
+release name: `applejackrp-sandbox-runners`, `rivet-runners`,
+`rivet-workstation-runners` or `cairn-runners`). Watch:
 
 ```bash
 kubectl -n actions-runner-system get pods -w
@@ -116,22 +118,22 @@ land inside the namespace's `ResourceQuota`/`LimitRange`
 (`kubectl -n actions-runner-system get resourcequota,limitrange`) rather than
 running unbounded, and that ordinary jobs actually complete without hitting
 the 1 core / 1Gi per-container ceiling. `Rivet`'s cargo builds are the most
-likely of the three to hit that ceiling first. If a real workflow needs more
+likely of the four to hit that ceiling first. If a real workflow needs more
 than it, raise `limitrange.yaml`'s `max` deliberately, in its own PR, rather
 than loosening it as a side effect of getting one job to pass. Since the
-`ResourceQuota` is shared across all three repos, also watch what happens if
+`ResourceQuota` is shared across all four repos, also watch what happens if
 two of them run CI at the same time: the second build's pods should queue as
 `Pending`, not fail outright.
 
 Once a run has gone green on each repo actually using this, remove this
 runbook's `UNTESTED` banner.
 
-## Adding a fourth private repo later
+## Adding a fifth private repo later
 
-Copy one of the three app directories to a new one, change
+Copy one of the four app directories to a new one, change
 `githubConfigUrl`, the `OCIRepository`/`HelmRelease` names, and add its
 `ks.yaml` to `kubernetes/apps/actions-runner-system/kustomization.yaml`.
 `githubConfigSecret` stays `actions-runner-github-app` if the new repo is
 added to the existing App's installation (Install App page, add the repo to
 the same installation); only create a second App if that repo's blast
-radius genuinely needs to be separate from the other three's.
+radius genuinely needs to be separate from the other four's.

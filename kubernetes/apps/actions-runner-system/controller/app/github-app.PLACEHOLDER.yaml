@@ -2,10 +2,10 @@
 #
 # Shared credential for one GitHub App installed on every repo this
 # namespace runs a scale set for (AppleJackRP-sandbox, Rivet,
-# rivet-workstation). Each app's helmrelease.yaml references this same
-# secret name as its pre-defined githubConfigSecret. The App does not exist
-# yet. Full steps, including how to create it and install it on all three
-# repos, are in docs/runbooks/actions-runner-controller.md.
+# rivet-workstation, cairn). Each app's helmrelease.yaml references this
+# same secret name as its pre-defined githubConfigSecret. The App does not
+# exist yet. Full steps, including how to create it and install it on all
+# four repos, are in docs/runbooks/actions-runner-controller.md.
 #
 # Once the App exists and its private key has been downloaded:
 #   1. Replace the three REPLACE_WITH_* values below.

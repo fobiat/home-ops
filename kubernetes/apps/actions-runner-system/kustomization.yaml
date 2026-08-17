@@ -6,4 +6,5 @@ resources:
   - ./applejackrp-sandbox/ks.yaml
   - ./rivet/ks.yaml
   - ./rivet-workstation/ks.yaml
+  - ./cairn/ks.yaml
   - ./netpol/ks.yaml
