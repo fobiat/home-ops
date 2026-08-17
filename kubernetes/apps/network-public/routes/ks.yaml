@@ -8,6 +8,7 @@ spec:
   targetNamespace: network-public
   dependsOn:
     - name: network-public-gateway
+    - name: umami
   commonMetadata:
     labels:
       app.kubernetes.io/name: network-public-routes

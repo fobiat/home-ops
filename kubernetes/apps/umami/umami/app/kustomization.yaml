@@ -6,4 +6,5 @@ resources:
   - ./deployment.yaml
   - ./httproute.yaml
   - ./gatus-check.yaml
+  - ./referencegrant.yaml
   - ./secret-app.sops.yaml
