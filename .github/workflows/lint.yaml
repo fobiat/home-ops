@@ -26,6 +26,9 @@ jobs:
       - name: Comment budget
         run: bash scripts/comment-budget.sh
 
+      - name: Check cloudflared ingress
+        run: bash scripts/check-cloudflared-ingress.sh
+
       - name: Build docs
         run: task docs:build
 

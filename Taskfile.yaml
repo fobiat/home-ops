@@ -22,6 +22,7 @@ tasks:
       - task: lint:yaml
       - task: lint:kubeconform
       - task: lint:comments
+      - task: lint:cloudflared-ingress
       - task: docs:build
 
   lint:yaml:
@@ -54,6 +55,10 @@ tasks:
   lint:comments:
     desc: Fail if comment lines exceed 10 percent of the tree
     cmd: bash {{.ROOT_DIR}}/scripts/comment-budget.sh
+
+  lint:cloudflared-ingress:
+    desc: Ensure tunnel routes cannot bypass the external Gateway
+    cmd: bash {{.ROOT_DIR}}/scripts/check-cloudflared-ingress.sh
 
   diff:
     desc: Show what a change would actually do to the cluster
