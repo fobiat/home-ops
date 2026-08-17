@@ -79,17 +79,18 @@ The four objects above are not equally guarded, and "missing any one of them fai
 safe" should not be read as "all four are policy-enforced". The first three are:
 the Gateway lives in its own namespace, both admission policies reject the obvious
 mistakes at write time, and a missing `ReferenceGrant` is enforced by the Gateway
-API implementation itself. The fourth, cloudflared's ingress list, is not checked
-by anything. It sits upstream of all three, so a single entry pointing at
+API implementation itself. The fourth, cloudflared's ingress list, sits upstream of
+all three, so a single entry pointing at
 `cilium-gateway-internal.network.svc.cluster.local:443` would publish every LAN
 service without touching the `external` Gateway, either policy, `routes/app/` or
 any `ReferenceGrant`, and `ls kubernetes/apps/network-public/routes/app/` would
 still truthfully say nothing is routed through the external Gateway while missing
-that a second publish path exists. The only controls on that file today are review
-of the pull request that changes it and the fact that external-dns cannot create a
-public DNS record to reach anything routed that way. Worth closing later with a CI
-check or an admission policy asserting the ingress list only ever names
-`cilium-gateway-external.network-public`. Not urgent while the DNS half is absent.
+that a second publish path exists. The tunnel ingress check runs in local lint and
+CI. It requires every hostname entry to name
+`cilium-gateway-external.network-public.svc.cluster.local:443`, requires the origin
+host headers to match the hostname, and requires the final rule to remain
+`http_status:404`. external-dns also cannot create a public DNS record for this
+hostname.
 
 ## What this does not protect
 
