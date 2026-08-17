@@ -8,6 +8,7 @@ components:
 resources:
   - ./helmrelease.yaml
   - ./config.yaml
+  - ./dns-checks.yaml
   - ./rbac.yaml
   - ./httproute.yaml
   - ./volsync-repo-pvc.yaml
