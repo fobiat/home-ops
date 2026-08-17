@@ -1,0 +1,22 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: umami-db
+  namespace: flux-system
+spec:
+  targetNamespace: umami
+  dependsOn:
+    - name: cnpg-operator
+    - name: cnpg-barman-plugin
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: umami-db
+  path: ./kubernetes/apps/umami/umami-db/app
+  prune: true
+  wait: true
+  interval: 1h
+  timeout: 15m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system

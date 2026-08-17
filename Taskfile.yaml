@@ -46,6 +46,7 @@ tasks:
     sources:
       - "{{.ROOT_DIR}}/scripts/crd-schemas.sh"
       - "{{.KUBERNETES_DIR}}/apps/volsync-system/volsync/app/helmrelease.yaml"
+      - "{{.KUBERNETES_DIR}}/apps/cnpg-system/cnpg-operator/app/helmrelease.yaml"
     generates:
       - "{{.ROOT_DIR}}/.schemas/**/*.json"
 
