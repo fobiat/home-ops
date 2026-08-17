@@ -55,7 +55,13 @@ spec:
                 memory: 128Mi
     # PLAN.md's phase three section: start low on a single four-core node.
     minRunners: 0
-    maxRunners: 2
+    # Down from 2: two jobs in the same workflow (e.g. cairn's check +
+    # manifests) both targeting this scale set could each get a control pod
+    # admitted before either progressed to requesting its job-container pod,
+    # which is what actually exhausts the namespace quota (see ADR 0015's
+    # addendum). 1 doesn't eliminate cross-*repo* races, but it removes the
+    # same-repo half of them, which was the larger contributor live.
+    maxRunners: 1
     # kubernetes mode: runner pods stay thin orchestrators, each workflow
     # step runs as its own pod with no Docker daemon and no privileged
     # sidecar. Talos has neither a Docker daemon nor loadable workload
