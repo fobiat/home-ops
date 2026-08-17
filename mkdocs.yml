@@ -48,6 +48,7 @@ nav:
   - Grafana dashboards: monitoring-dashboards.md
   - Gatus: gatus.md
   - Cluster backup: cluster-backup.md
+  - Hubble: hubble.md
   - tuppr: tuppr.md
   - Exposure: exposure.md
   - Runbooks:
