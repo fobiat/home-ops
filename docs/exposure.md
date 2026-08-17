@@ -6,22 +6,27 @@ For why the guardrails are shaped this way, see
 
 ## What is public
 
-Nothing.
+Nothing is reachable from the internet yet.
 
-The `external` Gateway exists in the `network-public` namespace with one listener
-for `insights.fobiat.dev` and zero routes attached to it. The cloudflared tunnel is
-Healthy and its ingress list is exactly one entry, `http_status:404`. Every part of
-the path is built and connected, and it terminates in a 404 because there is
-nothing on the other end.
+The `external` Gateway has one route, `umami-collect`, for
+`insights.fobiat.dev`. cloudflared has a matching ingress entry that reaches the
+external Gateway, and the Gateway accepts only the exact `/script.js` and
+`/api/send` paths. Public DNS is deliberately still absent: no CNAME points
+`insights.fobiat.dev` at the tunnel, so no client can enter this route.
 
-The complete answer to "what is public?" is:
+Before creating that CNAME, add the Cloudflare WAF rate-limit rule for
+`/api/send` described in [ADR 0014](adr/0014-umami-analytics.md). The live
+route is a staged dependency, not evidence that analytics are publicly enabled.
+
+The complete answer to "what can enter through the external Gateway?" is:
 
 ```sh
 ls kubernetes/apps/network-public/routes/app/
 ```
 
 Keep asking it that way rather than reading a list here. A list in prose drifts the
-first time someone forgets to update it; a directory listing cannot.
+first time someone forgets to update it; a directory listing cannot. Public DNS is a
+separate, required check.
 
 ## How something becomes public
 

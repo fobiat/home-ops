@@ -39,6 +39,7 @@ spec:
                   destination="/backup/umami-${timestamp}.dump"
                   pg_dump --dbname="$DATABASE_URL" --format=custom --file="$temporary"
                   test -s "$temporary"
+                  pg_restore --list "$temporary" >/dev/null
                   mv "$temporary" "$destination"
                   ls -1t /backup/umami-*.dump 2>/dev/null | tail -n "+$((RETAIN + 1))" | xargs -r rm -f --
               env:
