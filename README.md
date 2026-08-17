@@ -8,15 +8,16 @@ whole reason it is laid out this way.
 
 ## Status
 
-Being rebuilt. This is version 3, and nothing is running yet.
+Live. This is version 3, on Talos, running real workloads: monitoring
+(kube-prometheus-stack), CNPG-backed Postgres, self-hosted GitHub Actions runners for
+several private repos, Umami analytics, and [Cairn](https://github.com/fobiat/cairn), a UK
+live-incident lookup service deployed straight from its own repository via Flux.
 
 The history here goes back to January 2021. Version 1 was Kubernetes on a Dell PowerEdge
 and lived in this repository until electricity prices made a full rack unappealing.
 Version 2 was k3s on a Dell Optiplex and lives in
 [-DEPRECIATED-k3s-homelab](https://github.com/fobiat/-DEPRECIATED-k3s-homelab) at the `v2`
 tag. Version 3 starts here, on Talos.
-
-The plan is real. The cluster is not, yet.
 
 ## Hardware
 
