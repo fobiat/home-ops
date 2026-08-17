@@ -12,13 +12,19 @@ spec:
     - name: cnpg-operator
   path: ./infra/kubernetes/database
   prune: true
-  wait: true
-  # Explicit health checks, not the default "wait for everything in the
-  # inventory": cairn-backup is local-path with WaitForFirstConsumer, which
-  # never reaches Bound until the backup CronJob's first scheduled run
-  # actually mounts it. Waiting on it made this Kustomization NotReady
-  # indefinitely even though the database itself was healthy the whole time.
-  #
+  # false, not true: confirmed live that wait: true and healthChecks are
+  # additive, not one overriding the other. With wait: true, the previous
+  # two fixes (scoping healthChecks to the Cluster, then to the Pod) both
+  # still failed on the exact same error, because Flux was separately
+  # waiting on every object in the inventory regardless of what
+  # healthChecks named. cairn-backup is local-path with
+  # WaitForFirstConsumer, which never reaches Bound until the backup
+  # CronJob's first scheduled run actually mounts it, so that generic
+  # inventory-wide wait could never succeed on its own. healthChecks below
+  # is the actual and only readiness gate now: still real (still won't
+  # report Ready until Postgres is actually up), just no longer entangled
+  # with a PVC that structurally can't bind on this timeline.
+  wait: false
   # The target is the instance Pod, not the CNPG Cluster CR: confirmed live
   # that Cluster never sets status.observedGeneration at all (empty, against
   # metadata.generation: 1), which Flux's generic kstatus reader requires to
