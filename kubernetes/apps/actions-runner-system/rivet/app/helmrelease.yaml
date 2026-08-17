@@ -35,6 +35,24 @@ spec:
     controllerServiceAccount:
       namespace: actions-runner-system
       name: actions-runner-controller-gha-rs-controller
+    # The listener is a long-running long-poll client with no relation to
+    # job size; left to the namespace LimitRange's default it claims 500m
+    # cpu / 512Mi it never uses. With four scale sets that alone consumed
+    # 2000m of the namespace's 2000m ResourceQuota ceiling before a single
+    # job pod could ever be scheduled (rivet-workstation-runners' own
+    # listener couldn't even start). Sized down to what the listener
+    # actually needs, so the quota stays available for real job pods.
+    listenerTemplate:
+      spec:
+        containers:
+          - name: listener
+            resources:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                cpu: 100m
+                memory: 128Mi
     # PLAN.md's phase three section: start low on a single four-core node.
     # The namespace's shared ResourceQuota, not this number, is the real
     # cross-repo ceiling once more than one scale set can be busy at once.
