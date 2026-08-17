@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - ./cluster-backup/ks.yaml
   - ./cluster-backup-restore/ks.yaml
+  - ./netpol/ks.yaml
