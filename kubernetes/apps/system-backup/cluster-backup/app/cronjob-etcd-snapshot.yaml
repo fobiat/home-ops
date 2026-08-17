@@ -36,6 +36,7 @@ spec:
                 - snapshot
                 - /staging/etcd.snapshot
                 - --talosconfig=/var/run/secrets/talos/talosconfig
+                - --nodes=192.168.0.226
               volumeMounts:
                 - name: staging
                   mountPath: /staging
