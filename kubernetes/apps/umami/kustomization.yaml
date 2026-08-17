@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - ./umami-db/ks.yaml
   - ./umami/ks.yaml
+  - ./umami-backup/ks.yaml
