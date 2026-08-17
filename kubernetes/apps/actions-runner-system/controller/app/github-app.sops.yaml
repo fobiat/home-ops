@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: actions-runner-github-app
+type: Opaque
+stringData:
+    github_app_id: ENC[AES256_GCM,data:apmskDjRyvOyyQdnrWuSoPDKA/0=,iv:XDYyKv7MB/sZJnck4g3FloT7GqmU8WVnZOVuQuidX8A=,tag:cGDUw8LXQpr8IhkLHWGyWw==,type:str]
+    github_app_installation_id: ENC[AES256_GCM,data:rWEK2XnSoEjq,iv:9X3876zP85sxq1SudQsNHdsepqDfMRxSG5QRbrJm3dU=,tag:s5FYTbxyJ0ceiglKWkJMoA==,type:str]
+    github_app_private_key: ENC[AES256_GCM,data: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,iv:tRrVwdoLCVYLAhB5tspfyy3IQ/qYUuIWnlZuUs3gHh4=,tag:kwuvLqy59yQ/BSUu8cf0lA==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSA4cU13Vm1UeDJWcCtYTEpr
+            c0llQ3ZYbXlPNTlCN0FsK050eVFYYlAwdzBRCjhHUDZQMGpZSnJVOWRhUmRpQi9O
+            ODRYUTNGT0JMQldaTlFCUzM5cHhmVFEKLS0tIG56bER6NE5XeXhUQ056NVpMREl6
+            ZHVxQXJwVTVoQXZvNzluTW8zdWJVbjAKTKPCkjWMKcnkKN9XS4F4CxvWwHos0nVJ
+            +vxiZEsGf6OXmcMl5A/el8q0WLtjUQkplneoPGl/V1l3+KsyiWfgYQ==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age16p8gv792c4npw2xt3pq8yhu23u47v2sprdatceq779r34nzp24pqrd92vg
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-08-17T11:59:25Z"
+    mac: ENC[AES256_GCM,data:VYSsHbSBpTArCt7122fdDMufRG6mnMzi35xBS0bfawF6HgzUQHdC9VFvPA0abcxoWNJo+knK7ggE0nCStAXDKbEZ/DYlAdiKZyK1zBRmLZu8O9yv+Wy+tk5sXaEmgu2IIzxEMIMyyRQt3olmQWwX3A10eFt3lBpNdRHCY4fribg=,iv:WFfUSEdn/PztgraKO9SVjTv2b6w7gjmClpFkgLcX28k=,tag:rc68DcBpp7AxrVPspEhWtw==,type:str]
+    version: 3.13.3

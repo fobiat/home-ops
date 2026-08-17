@@ -8,6 +8,4 @@ resources:
   - ./helmrelease.yaml
   - ./resourcequota.yaml
   - ./limitrange.yaml
-  # ./github-app.sops.yaml: add once the real GitHub App credentials are
-  # encrypted (see github-app.PLACEHOLDER.yaml in this dir). Every scale
-  # set in this namespace references this same secret.
+  - ./github-app.sops.yaml

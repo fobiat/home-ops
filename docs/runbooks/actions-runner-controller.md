@@ -2,18 +2,20 @@
 
 !!! warning "UNTESTED"
 
-    Not yet executed on this cluster. See AGENTS.md rule 9. The controller and
-    guardrails can be proven on the throwaway Talos-in-Docker cluster; a real
-    workflow run against any scale set cannot, since that needs the real
-    GitHub App. See ADR 0015.
+    Steps 1-4 are done: the GitHub App exists (`fobiat-actions-runner-controller`,
+    app ID `4623315`), installed on all four repos, credential encrypted into
+    `controller/app/github-app.sops.yaml`, all four scale sets unsuspended.
+    What's still unproven is Step 5: a real workflow run showing
+    `containerMode: kubernetes` behaves as documented on this node. See
+    AGENTS.md rule 9 and ADR 0015.
 
 The controller and its resource guardrails are live once
 `kubernetes/apps/actions-runner-system` is merged. Four runner scale sets
-ship alongside it, each `spec.suspend: true`, one per private repo with a
-real CI pipeline today: `fobiat/AppleJackRP-sandbox`, `fobiat/Rivet`,
-`fobiat/rivet-workstation` and `fobiat/cairn`. All four reference one shared
-GitHub App that does not exist yet. This is how you create it and turn the
-scale sets on.
+ship alongside it, one per private repo with a real CI pipeline today:
+`fobiat/AppleJackRP-sandbox`, `fobiat/Rivet`, `fobiat/rivet-workstation` and
+`fobiat/cairn`. All four reference one shared GitHub App. Steps 1-4 below are
+kept as the reference procedure (and for adding a fifth repo later); skip to
+Step 5 to finish proving this out.
 
 ## Step 1: create the GitHub App
 

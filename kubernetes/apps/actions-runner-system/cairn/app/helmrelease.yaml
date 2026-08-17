@@ -18,11 +18,6 @@ metadata:
   name: cairn-runners
 spec:
   interval: 1h
-  # Stays suspended until the GitHub App exists and
-  # actions-runner-github-app is a real SOPS secret, not this placeholder
-  # wiring. See ADR 0015 and ../controller/app/github-app.PLACEHOLDER.yaml
-  # for the exact activation steps.
-  suspend: true
   chartRef:
     kind: OCIRepository
     name: cairn-runners
