@@ -27,11 +27,11 @@ spec:
       resources:
         requests:
           cpu: 50m
-          memory: 128Mi
+          memory: 256Mi
         limits:
-          # The log tailer's file cache hit this cap and entered direct reclaim,
-          # rereading about 680MB/s from the Talos system disk.
-          memory: 512Mi
+          # 512Mi still filled within minutes and resumed direct reclaim. The
+          # log tailer's file-backed working set needs room above that floor.
+          memory: 1Gi
       configMap:
         content: |
           discovery.kubernetes "pods" {
