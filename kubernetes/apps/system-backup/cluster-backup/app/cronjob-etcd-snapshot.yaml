@@ -61,9 +61,12 @@ spec:
                   set -eu
                   test -s /staging/etcd.snapshot
                   size=$(wc -c < /staging/etcd.snapshot)
-                  # bbolt databases are always a whole number of 4096-byte pages; this
-                  # will not catch corruption, but it catches a truncated stream.
-                  [ $((size % 4096)) -eq 0 ]
+                  # talosctl appends a 32-byte SHA256 trailer after streaming the raw
+                  # bbolt pages, the same check talosctl's own etcd snapshot command
+                  # uses on the byte count it just wrote: size % 512 == sha256.Size.
+                  # https://github.com/siderolabs/talos/blob/v1.13.8/cmd/talosctl/cmd/talos/etcd.go#L374
+                  # This will not catch corruption, but it catches a truncated stream.
+                  [ $((size % 512)) -eq 32 ]
                   mkdir -p /backup/etcd
                   dest="/backup/etcd/etcd-$(date -u +%Y%m%dT%H%M%SZ).snapshot"
                   mv /staging/etcd.snapshot "$dest"
