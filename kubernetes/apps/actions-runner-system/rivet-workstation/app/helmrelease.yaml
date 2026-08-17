@@ -57,7 +57,13 @@ spec:
     # The namespace's shared ResourceQuota, not this number, is the real
     # cross-repo ceiling once more than one scale set can be busy at once.
     minRunners: 0
-    maxRunners: 2
+    # Down from 2: two jobs in the same workflow (e.g. cairn's check +
+    # manifests) both targeting this scale set could each get a control pod
+    # admitted before either progressed to requesting its job-container pod,
+    # which is what actually exhausts the namespace quota (see ADR 0015's
+    # addendum). 1 doesn't eliminate cross-*repo* races, but it removes the
+    # same-repo half of them, which was the larger contributor live.
+    maxRunners: 1
     # kubernetes mode: see ADR 0015 for why (no Docker daemon on Talos, no
     # loadable workload kernel modules).
     containerMode:
