@@ -18,6 +18,25 @@ Before creating that CNAME, add the Cloudflare WAF rate-limit rule for
 `/api/send` described in [ADR 0014](adr/0014-umami-analytics.md). The live
 route is a staged dependency, not evidence that analytics are publicly enabled.
 
+## Enabling Umami collection
+
+This is the complete Cloudflare hand-off. It is a public-exposure change, so make
+the rate-limit rule before creating the DNS record.
+
+1. In the `fobiat.dev` zone, create a proxied CNAME record named `insights` that
+   targets `50e8490f-820b-4e20-a076-65254e8ad157.cfargotunnel.com`.
+2. Spend the zone's one free-tier rate-limit rule on the ingest endpoint:
+   - Expression: `(http.host eq "insights.fobiat.dev" and http.request.uri.path eq "/api/send")`
+   - Characteristic: source IP
+   - Rate: 20 requests per 10 seconds
+   - Action: block for 60 seconds
+3. Do not add Bot Fight Mode or a challenge to this hostname. The tracker sends
+   background requests, so either would break collection for real visitors.
+
+Afterwards, confirm that `https://insights.fobiat.dev/script.js` reaches the
+tracker and that unrelated paths still return the configured 404. The Umami
+dashboard stays private at `umami.lab.fobiat.dev`.
+
 The complete answer to "what can enter through the external Gateway?" is:
 
 ```sh
