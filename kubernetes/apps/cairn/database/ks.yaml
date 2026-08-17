@@ -13,6 +13,16 @@ spec:
   path: ./infra/kubernetes/database
   prune: true
   wait: true
+  # Explicit health checks, not the default "wait for everything in the
+  # inventory": cairn-backup is local-path with WaitForFirstConsumer, which
+  # never reaches Bound until the backup CronJob's first scheduled run
+  # actually mounts it. Waiting on it made this Kustomization NotReady
+  # indefinitely even though the Cluster itself was healthy the whole time.
+  healthChecks:
+    - apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      name: cairn-postgres
+      namespace: cairn
   interval: 1h
   timeout: 15m
   sourceRef:
