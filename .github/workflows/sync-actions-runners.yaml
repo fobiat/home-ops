@@ -58,7 +58,9 @@ jobs:
           git add kubernetes/apps/actions-runner-system
           git commit -m "feat(actions-runner-system): add runner scale sets for ${repos}"
           git push --force origin automation/sync-actions-runners
-          body=$(printf 'Auto-scaffolded by sync-actions-runners.\n\nNew repos: %s\n\nAlready installed on the shared GitHub App. Review the generated manifests, then merge to activate.' "${repos}")
+          body=$(printf 'Auto-scaffolded by sync-actions-runners.\n\nNew repos: %s\n\n%s' \
+            "${repos}" \
+            "Already installed on the shared GitHub App. Review the generated manifests, then merge to activate.")
           if gh pr view automation/sync-actions-runners >/dev/null 2>&1; then
             gh pr edit automation/sync-actions-runners --body "${body}"
           else
