@@ -56,8 +56,9 @@ it selects which cgroup gets SIGKILLed first under memory pressure.
 Cilium's agent, operator and envoy now set requests in `bootstrap/helmfile.yaml`.
 kube-prometheus-stack was retuned so no container in it is BestEffort either.
 Grafana and Alloy also need limits large enough to retain their active file-cache
-working sets. Their limits are 768Mi and 512Mi respectively, with requests based
-on observed steady-state use.
+working sets. Their limits are 768Mi and 1Gi respectively, with requests based
+on observed steady-state use. Alloy filled a 512Mi follow-up limit within minutes
+and resumed direct reclaim, so that intermediate value was not retained.
 
 ## Consequences
 
