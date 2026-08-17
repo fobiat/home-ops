@@ -18,3 +18,9 @@ spec:
   sourceRef:
     kind: GitRepository
     name: cairn
+  # Needed once infra/kubernetes/app carries a SOPS-encrypted ghcr-pull-secret
+  # (see automation/); harmless while it doesn't.
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
