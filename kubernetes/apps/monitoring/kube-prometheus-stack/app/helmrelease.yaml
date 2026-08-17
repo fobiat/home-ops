@@ -179,11 +179,11 @@ spec:
       resources:
         requests:
           cpu: 200m
-          memory: 224Mi
-        limits:
-          # Grafana 13 was OOMKilled at 256Mi during boot (apiserver/unified-
-          # storage registers ~20 GroupVersions). 384Mi clears that with room.
           memory: 384Mi
+        limits:
+          # At 384Mi the cgroup reclaimed its file cache continuously, driving
+          # about 1.5GB/s of reads from the system disk and starving the node.
+          memory: 768Mi
       sidecar:
         # Both sidecars stay on: dashboards loads the stack's bundled
         # dashboards, datasources wires up Prometheus. ~82Mi observed each.
