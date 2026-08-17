@@ -1,0 +1,22 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cairn-registry-auth
+  namespace: flux-system
+spec:
+  targetNamespace: cairn
+  dependsOn:
+    - name: cairn-namespace
+  path: ./kubernetes/apps/cairn/registry-auth/app
+  prune: true
+  wait: true
+  interval: 1h
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
