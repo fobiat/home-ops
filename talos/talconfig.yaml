@@ -62,14 +62,30 @@ controlPlane:
         proxy:
           disabled: true
     # Otherwise both bind to localhost and Prometheus cannot scrape them.
+    # Resource requests are Talos's tiny defaults (10m/50m): fine on an idle
+    # node, but live CI load repeatedly starved both into CrashLoopBackOff
+    # (leader-election lease renewals timing out against the local
+    # apiserver) once actions-runner-system's job pods, sized off their own
+    # requests, out-competed them for CFS shares under contention. kube-apiserver
+    # was never affected: its own default is already 200m/512Mi. Matching that
+    # here gives scheduler and controller-manager a comparable floor instead
+    # of effectively none.
     - |-
       cluster:
         controllerManager:
           extraArgs:
             bind-address: 0.0.0.0
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
         scheduler:
           extraArgs:
             bind-address: 0.0.0.0
+          resources:
+            requests:
+              cpu: 200m
+              memory: 128Mi
     # The kubelet runs in its own restricted mount namespace, so a UserVolumeConfig
     # mount isn't visible to it, or to hostPath volumes in pods, without this.
     # local-path-provisioner's helper pods failed with "read-only file system" on
