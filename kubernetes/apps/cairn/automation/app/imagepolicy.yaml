@@ -1,0 +1,17 @@
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImagePolicy
+metadata:
+  name: cairn-web
+spec:
+  imageRepositoryRef:
+    name: cairn-web
+  # Commit SHAs (the other tag CI pushes) don't sort chronologically, which
+  # is why CI also pushes a YYYYMMDDHHmmss tag on every push to main:
+  # fixed-width and always increasing, so numerical ordering picks the
+  # actual newest build rather than an arbitrary one.
+  filterTags:
+    pattern: "^[0-9]{14}$"
+  policy:
+    numerical:
+      order: asc

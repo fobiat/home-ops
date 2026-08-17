@@ -6,3 +6,4 @@ resources:
   - ./namespace/ks.yaml
   - ./database/ks.yaml
   - ./app/ks.yaml
+  - ./automation/ks.yaml

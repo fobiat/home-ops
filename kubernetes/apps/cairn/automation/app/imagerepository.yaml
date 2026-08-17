@@ -1,0 +1,12 @@
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageRepository
+metadata:
+  name: cairn-web
+spec:
+  image: ghcr.io/fobiat/cairn
+  interval: 5m
+  # The package is private (the repo it's built from is too), so this needs
+  # read:packages credentials the same way the Deployment's own pull does.
+  secretRef:
+    name: ghcr-pull-secret
