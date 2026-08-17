@@ -1,0 +1,74 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: rivet-workstation-runners
+spec:
+  interval: 1h
+  layerSelector:
+    mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
+    operation: copy
+  url: oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set
+  ref:
+    tag: 0.14.2
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: rivet-workstation-runners
+spec:
+  interval: 1h
+  # Stays suspended until the GitHub App exists and
+  # actions-runner-github-app is a real SOPS secret, not this placeholder
+  # wiring. See ADR 0015 and ../controller/app/github-app.PLACEHOLDER.yaml
+  # for the exact activation steps.
+  suspend: true
+  chartRef:
+    kind: OCIRepository
+    name: rivet-workstation-runners
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
+  values:
+    githubConfigUrl: https://github.com/fobiat/rivet-workstation
+    githubConfigSecret: actions-runner-github-app
+    controllerServiceAccount:
+      namespace: actions-runner-system
+      name: actions-runner-controller-gha-rs-controller
+    # PLAN.md's phase three section: start low on a single four-core node.
+    # The namespace's shared ResourceQuota, not this number, is the real
+    # cross-repo ceiling once more than one scale set can be busy at once.
+    minRunners: 0
+    maxRunners: 2
+    # kubernetes mode: see ADR 0015 for why (no Docker daemon on Talos, no
+    # loadable workload kernel modules).
+    containerMode:
+      type: kubernetes
+      kubernetesModeWorkVolumeClaim:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: local-path
+        resources:
+          requests:
+            storage: 2Gi
+    template:
+      spec:
+        containers:
+          - name: runner
+            image: ghcr.io/actions/actions-runner:latest
+            command: ["/home/runner/run.sh"]
+            # Single node, four cores. See AGENTS.md rule 7. The
+            # ResourceQuota and LimitRange in ../controller/app bound the
+            # per-step job pods this mode spawns; this bounds the runner's
+            # own control pod.
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                cpu: 500m
+                memory: 1Gi

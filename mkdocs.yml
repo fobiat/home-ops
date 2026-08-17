@@ -60,6 +60,7 @@ nav:
       - Crash storm: runbooks/crash-storm.md
       - Etcd snapshot restore: runbooks/etcd-restore.md
       - Data disk remount: runbooks/data-disk-remount.md
+      - actions-runner-controller: runbooks/actions-runner-controller.md
   - Decisions:
       - Overview: adr/README.md
       - 0001 Talos over k3s: adr/0001-talos-over-k3s.md
@@ -76,3 +77,4 @@ nav:
       - 0012 Data disk never mounted: adr/0012-data-disk-never-mounted.md
       - 0013 External exposure guardrails: adr/0013-external-exposure-guardrails.md
       - 0014 Umami analytics: adr/0014-umami-analytics.md
+      - 0015 actions-runner-controller: adr/0015-actions-runner-controller.md

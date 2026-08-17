@@ -19,3 +19,4 @@ resources:
   - ./network-public
   - ./cnpg-system
   - ./umami
+  - ./actions-runner-system

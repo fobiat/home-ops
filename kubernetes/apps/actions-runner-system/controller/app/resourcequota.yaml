@@ -1,0 +1,18 @@
+---
+# Hard ceiling for the whole actions-runner-system namespace: runner control
+# pods, listener pods and every per-step job pod containerMode=kubernetes
+# spawns. Once this is exhausted, further pods stay Pending instead of
+# starving the platform, the failure mode PLAN.md's phase three section
+# calls out by name. See ADR 0015 and the LimitRange in this same directory,
+# which is what stops an unbounded workflow step pod hitting this quota in
+# the first place.
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: actions-runner-system
+spec:
+  hard:
+    requests.cpu: "1"
+    requests.memory: 2Gi
+    limits.cpu: "2"
+    limits.memory: 4Gi

@@ -1,0 +1,44 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: actions-runner-controller
+spec:
+  interval: 1h
+  layerSelector:
+    mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
+    operation: copy
+  url: oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set-controller
+  ref:
+    tag: 0.14.2
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: actions-runner-controller
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: actions-runner-controller
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
+  values:
+    # Single node, four cores. See AGENTS.md rule 7. The manager is idle
+    # outside of scale-set reconciliation, so this stays small like tuppr's.
+    # cpu limit is explicit (unlike tuppr) because this namespace carries a
+    # ResourceQuota constraining limits.cpu, which requires every container
+    # in it to declare one.
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi

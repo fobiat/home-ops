@@ -25,3 +25,4 @@ reading.
 | [0012](0012-data-disk-never-mounted.md) | The data disk was never mounted, and minSize is why | Accepted |
 | [0013](0013-external-exposure-guardrails.md) | External exposure guardrails, and the four decisions behind them | Accepted |
 | [0014](0014-umami-analytics.md) | Umami analytics on CNPG, with a private dashboard and narrow public ingest | Accepted |
+| [0015](0015-actions-runner-controller.md) | actions-runner-controller for self-hosted GitHub Actions runners | Accepted |
