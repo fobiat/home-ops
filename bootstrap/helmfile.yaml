@@ -92,3 +92,12 @@ releases:
         # Neither works without the other on a single flat network with no BGP.
         l2announcements:
           enabled: true
+        hubble:
+          relay:
+            enabled: true
+            resources:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                memory: 64Mi
