@@ -1,33 +1,34 @@
-# Activating the AppleJackRP-sandbox runner scale set
+# Activating the private-repo runner scale sets
 
 !!! warning "UNTESTED"
 
     Not yet executed on this cluster. See AGENTS.md rule 9. The controller and
     guardrails can be proven on the throwaway Talos-in-Docker cluster; a real
-    workflow run against this scale set cannot, since that needs the real
+    workflow run against any scale set cannot, since that needs the real
     GitHub App. See ADR 0015.
 
 The controller and its resource guardrails are live once
-`kubernetes/apps/actions-runner-system` is merged. The runner scale set for
-`fobiat/AppleJackRP-sandbox` ships alongside it, `spec.suspend: true`,
-because it needs a GitHub App that does not exist yet. This is how you
-create that App and turn the scale set on.
+`kubernetes/apps/actions-runner-system` is merged. Three runner scale sets
+ship alongside it, each `spec.suspend: true`, one per private repo with a
+real CI pipeline today: `fobiat/AppleJackRP-sandbox`, `fobiat/Rivet` and
+`fobiat/rivet-workstation`. All three reference one shared GitHub App that
+does not exist yet. This is how you create it and turn the scale sets on.
 
 ## Step 1: create the GitHub App
 
 1. Go to `https://github.com/settings/apps/new` under the `fobiat` account.
-2. **GitHub App name**: anything unique, e.g. `fobiat-arc-applejackrp-sandbox`.
+2. **GitHub App name**: anything unique, e.g. `fobiat-actions-runner-controller`.
 3. **Homepage URL**: `https://github.com/fobiat/AppleJackRP-sandbox` (required
    field, not otherwise used).
-4. **Webhook**: uncheck "Active". This scale set polls; it does not use
+4. **Webhook**: uncheck "Active". These scale sets poll; none use
    webhook-driven scaling.
 5. **Repository permissions**:
    - Actions: **Read-only**
    - Administration: **Read and write**
    - Metadata: **Read-only** (mandatory default)
 
-   No organisation permissions are needed; this repository is on a personal
-   account, not an org. Confirmed against
+   No organisation permissions are needed; these repositories are on a
+   personal account, not an org. Confirmed against
    `actions/actions-runner-controller`'s own
    `authenticating-to-the-github-api.md` for repository-scoped runners.
 6. Create the app, then on its settings page:
@@ -35,23 +36,27 @@ create that App and turn the scale set on.
    - Under "Private keys", **Generate a private key**. This downloads a
      `.pem` file once; it cannot be re-downloaded, only regenerated.
 
-## Step 2: install the App on the one repo
+## Step 2: install the App on all three repos
 
 1. On the App's settings page, open **Install App**.
 2. Install it on the `fobiat` account, **Only select repositories**:
-   `AppleJackRP-sandbox`. Do not select "All repositories."
+   `AppleJackRP-sandbox`, `Rivet`, `rivet-workstation`. Do not select "All
+   repositories." (A repo can be added to this same installation later from
+   the same page, without creating a second App.)
 3. After installing, the URL bar shows
    `https://github.com/settings/installations/<INSTALLATION_ID>`. That
-   number is the **Installation ID**.
+   number is the **Installation ID**, shared by all three repos since they
+   are one installation.
 
 ## Step 3: encrypt the credential
 
-Same shape as every other credential this repo has staged this way (ADR
-0009's backup certificates, `alertmanager-discord-webhook.PLACEHOLDER.yaml`):
+One secret, shared by all three `helmrelease.yaml`s, same shape as every
+other credential this repo has staged this way (ADR 0009's backup
+certificates, `alertmanager-discord-webhook.PLACEHOLDER.yaml`):
 
 ```bash
-cd kubernetes/apps/actions-runner-system/applejackrp-sandbox/app
-cp github-app.PLACEHOLDER.yaml applejackrp-sandbox-runner-github-app.sops.yaml
+cd kubernetes/apps/actions-runner-system/controller/app
+cp github-app.PLACEHOLDER.yaml github-app.sops.yaml
 ```
 
 Edit the copy: set `github_app_id` and `github_app_installation_id` to the
@@ -60,14 +65,17 @@ values from steps 1 and 2 (as strings, quoted), and replace
 downloaded `.pem` file, indented to match the existing block scalar.
 
 ```bash
-sops --encrypt --in-place applejackrp-sandbox-runner-github-app.sops.yaml
+sops --encrypt --in-place github-app.sops.yaml
 ```
 
 Then:
 
-1. Add `./applejackrp-sandbox-runner-github-app.sops.yaml` to this
-   directory's `kustomization.yaml` (uncomment the line already there).
-2. Set `helmrelease.yaml`'s `spec.suspend` to `false`.
+1. Add `./github-app.sops.yaml` to this directory's `kustomization.yaml`
+   (uncomment the line already there).
+2. Set `spec.suspend` to `false` in whichever of the three scale sets'
+   `helmrelease.yaml` files are ready to go live. They do not have to move
+   together; unsuspending `applejackrp-sandbox/app/helmrelease.yaml` alone
+   first, to prove the pattern before flipping the other two, is reasonable.
 3. Delete `github-app.PLACEHOLDER.yaml`.
 4. Delete the local `.pem` file once it is encrypted into Git; it should not
    sit on disk outside the SOPS file.
@@ -82,19 +90,20 @@ kubectl -n actions-runner-system get autoscalingrunnerset
 kubectl -n actions-runner-system get pods
 ```
 
-Expect one listener pod once the `AutoscalingRunnerSet` picks up the
-unsuspended HelmRelease. `kubectl describe autoscalingrunnerset
-applejackrp-sandbox-runners` surfaces the GitHub API error directly if the
-App ID, installation ID or key are wrong, faster than reading pod logs.
+Expect one listener pod per unsuspended scale set. `kubectl describe
+autoscalingrunnerset <name>-runners` surfaces the GitHub API error directly
+if the App ID, installation ID or key are wrong, faster than reading pod
+logs.
 
-On the GitHub side, `AppleJackRP-sandbox` → Settings → Actions → Runners
-should show the scale set as a runner group.
+On the GitHub side, each repo's Settings → Actions → Runners should show
+its scale set as a runner group.
 
 ## Step 5: prove it with a real workflow
 
-Trigger any workflow in `AppleJackRP-sandbox` with
-`runs-on: <scale-set-name>` (the scale set name defaults to the Helm release
-name, `applejackrp-sandbox-runners`). Watch:
+Trigger any workflow in one of the three repos with
+`runs-on: <scale-set-name>` (the scale set name defaults to the Helm
+release name: `applejackrp-sandbox-runners`, `rivet-runners` or
+`rivet-workstation-runners`). Watch:
 
 ```bash
 kubectl -n actions-runner-system get pods -w
@@ -106,17 +115,23 @@ until it actually happens: confirm `containerMode: kubernetes` job-step pods
 land inside the namespace's `ResourceQuota`/`LimitRange`
 (`kubectl -n actions-runner-system get resourcequota,limitrange`) rather than
 running unbounded, and that ordinary jobs actually complete without hitting
-the 1 core / 1Gi per-container ceiling. If a real workflow needs more than
-that ceiling, raise `limitrange.yaml`'s `max` deliberately, in its own PR,
-rather than loosening it as a side effect of getting one job to pass.
+the 1 core / 1Gi per-container ceiling. `Rivet`'s cargo builds are the most
+likely of the three to hit that ceiling first. If a real workflow needs more
+than it, raise `limitrange.yaml`'s `max` deliberately, in its own PR, rather
+than loosening it as a side effect of getting one job to pass. Since the
+`ResourceQuota` is shared across all three repos, also watch what happens if
+two of them run CI at the same time: the second build's pods should queue as
+`Pending`, not fail outright.
 
-Once a run has gone green, remove this runbook's `UNTESTED` banner.
+Once a run has gone green on each repo actually using this, remove this
+runbook's `UNTESTED` banner.
 
-## Adding a second private repo later
+## Adding a fourth private repo later
 
-Copy `applejackrp-sandbox/` to a new directory, change `githubConfigUrl`,
-`githubConfigSecret`'s name, the `OCIRepository`/`HelmRelease` names, and add
-its `ks.yaml` to `kubernetes/apps/actions-runner-system/kustomization.yaml`.
-Either reuse this GitHub App (install it on the new repo too, from the same
-App's Install App page) or create a separate one; the controller and its
-guardrails are shared either way.
+Copy one of the three app directories to a new one, change
+`githubConfigUrl`, the `OCIRepository`/`HelmRelease` names, and add its
+`ks.yaml` to `kubernetes/apps/actions-runner-system/kustomization.yaml`.
+`githubConfigSecret` stays `actions-runner-github-app` if the new repo is
+added to the existing App's installation (Install App page, add the repo to
+the same installation); only create a second App if that repo's blast
+radius genuinely needs to be separate from the other three's.

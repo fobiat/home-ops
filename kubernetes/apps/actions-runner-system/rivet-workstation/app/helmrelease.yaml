@@ -2,7 +2,7 @@
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: OCIRepository
 metadata:
-  name: applejackrp-sandbox-runners
+  name: rivet-workstation-runners
 spec:
   interval: 1h
   layerSelector:
@@ -15,7 +15,7 @@ spec:
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: applejackrp-sandbox-runners
+  name: rivet-workstation-runners
 spec:
   interval: 1h
   # Stays suspended until the GitHub App exists and
@@ -25,7 +25,7 @@ spec:
   suspend: true
   chartRef:
     kind: OCIRepository
-    name: applejackrp-sandbox-runners
+    name: rivet-workstation-runners
   install:
     remediation:
       retries: 3
@@ -35,19 +35,18 @@ spec:
       retries: 3
       strategy: rollback
   values:
-    githubConfigUrl: https://github.com/fobiat/AppleJackRP-sandbox
+    githubConfigUrl: https://github.com/fobiat/rivet-workstation
     githubConfigSecret: actions-runner-github-app
     controllerServiceAccount:
       namespace: actions-runner-system
       name: actions-runner-controller-gha-rs-controller
     # PLAN.md's phase three section: start low on a single four-core node.
+    # The namespace's shared ResourceQuota, not this number, is the real
+    # cross-repo ceiling once more than one scale set can be busy at once.
     minRunners: 0
     maxRunners: 2
-    # kubernetes mode: runner pods stay thin orchestrators, each workflow
-    # step runs as its own pod with no Docker daemon and no privileged
-    # sidecar. Talos has neither a Docker daemon nor loadable workload
-    # kernel modules, ruling out dind. See ADR 0015 for the alternatives
-    # considered.
+    # kubernetes mode: see ADR 0015 for why (no Docker daemon on Talos, no
+    # loadable workload kernel modules).
     containerMode:
       type: kubernetes
       kubernetesModeWorkVolumeClaim:
