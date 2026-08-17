@@ -1,13 +1,54 @@
 # Activating the private-repo runner scale sets
 
-!!! warning "UNTESTED"
+!!! warning "PARTIALLY PROVEN (cairn only)"
 
     Steps 1-4 are done: the GitHub App exists (`fobiat-actions-runner-controller`,
     app ID `4623315`), installed on all four repos, credential encrypted into
     `controller/app/github-app.sops.yaml`, all four scale sets unsuspended.
-    What's still unproven is Step 5: a real workflow run showing
-    `containerMode: kubernetes` behaves as documented on this node. See
-    AGENTS.md rule 9 and ADR 0015.
+
+    **2026-08-17: Step 5 confirmed for `cairn` only.** `fobiat/cairn` PR #9
+    (`ci/pool-cluster-and-laptop`) put `check`/`manifests`/`notify` on the
+    `cairn-runners` label. Watched it live: an ephemeral runner pod
+    (`cairn-runners-qjp2j-runner-mcwrf`) registered against
+    `https://github.com/fobiat/cairn`, claimed the `notify` job, and
+    `containerMode: kubernetes` created a matching `<runner>-workflow` pod
+    running `alpine:3.20` inside the namespace's `ResourceQuota`/`LimitRange`
+    (confirmed with `kubectl -n actions-runner-system get resourcequota,limitrange`);
+    the step ran `apk add curl jq` and posted to Discord successfully. This is
+    direct proof the mechanism ADR 0015 flags as unproven does work as
+    documented.
+
+    Still not proven: `check` and `manifests` (their job containers are
+    `node:26` and `ubuntu:24.04`) have not yet completed a real step —
+    every attempt so far has died in the runner's own "Set up job" phase
+    downloading `actions/checkout` from `codeload.github.com`, HTTP 429,
+    three retries in a row across both the cluster and laptop runners. That
+    is GitHub-side throttling of this laptop's outbound IP, not a scale-set
+    defect (the laptop runner hit the identical error). Retry later once the
+    throttle clears rather than immediately again; three reruns in ~20
+    minutes is almost certainly what triggered it. `Rivet`, `rivet-workstation`
+    and `AppleJackRP-sandbox` remain entirely unproven — none of their
+    workflows have been pointed at their scale set's label yet.
+
+    **Separate finding, same session: this node is CPU-starved, not
+    memory-starved.** While watching PR #9, `kube-scheduler` and
+    `kube-controller-manager` were both `CrashLoopBackOff`, and new pods took
+    several minutes to get scheduled. Root cause confirmed directly: both
+    pods' last-terminated state was `reason: Error` (exit 1), not
+    `OOMKilled`, and their logs show leader-election lease renewals timing
+    out (`context deadline exceeded` calling the local apiserver), the
+    classic symptom of a process not getting enough CPU time to make its own
+    HTTP calls before the request deadline. `/proc/loadavg` read 17-26 on
+    this node's 4 allocatable cores for most of the session. `kubectl top`
+    isn't available (no metrics-server), so this was confirmed via
+    `talosctl processes` and `talosctl read /proc/loadavg` directly. The
+    only actual OOM-kill in `dmesg` during the same window was an unrelated
+    12 MB `prometheus-conf` init container. This resolved on its own as CI
+    load dropped, but it means bursts of concurrent CI (four scale sets
+    sharing one node, on top of the existing monitoring/cilium/cnpg stack)
+    can degrade control-plane stability, not just runner-pod scheduling
+    latency. Worth a second node before relying on this for anything
+    higher-stakes than CI.
 
 The controller and its resource guardrails are live once
 `kubernetes/apps/actions-runner-system` is merged. Four runner scale sets
