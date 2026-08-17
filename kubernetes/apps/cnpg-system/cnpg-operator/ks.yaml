@@ -1,0 +1,19 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cnpg-operator
+  namespace: flux-system
+spec:
+  targetNamespace: cnpg-system
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: cnpg-operator
+  path: ./kubernetes/apps/cnpg-system/cnpg-operator/app
+  prune: true
+  wait: true
+  interval: 1h
+  timeout: 10m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
