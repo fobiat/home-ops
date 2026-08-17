@@ -43,6 +43,11 @@ the source is created, which can happen before the first scheduled dump. A succe
 empty-directory skip is expected in that case; the next scheduled sync is the first
 archive of real data.
 
+Confirmed live on 2026-08-17: the first non-empty sync processed two dump files and
+saved Restic snapshot `8786c5a6`. The repository URI is `local:/mnt/repo`, matching
+VolSync's repository-volume mount. Its value and the restic password are SOPS-encrypted
+Secret `data` fields so Flux can reconcile updates through server-side apply.
+
 The repository is an interim same-node copy until the R2 Barman plugin and off-node
 retention are configured. It protects against an accidental PVC deletion, not loss of
 the host or its data disk. Restore testing is still required before calling this a
@@ -54,3 +59,6 @@ Gatus checks the private dashboard at `https://umami.lab.fobiat.dev`. CloudNativ
 PodMonitor exposes PostgreSQL metrics to the existing Prometheus stack. The dashboard
 is healthy only when the Umami Deployment, the `umami-db` Cluster, and its generated
 app secret are all ready.
+
+The deployment is annotated for Stakater Reloader. A future change to its managed app
+secret creates a new pod, so the process does not keep an old environment value.
