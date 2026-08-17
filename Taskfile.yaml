@@ -27,7 +27,7 @@ tasks:
 
   lint:yaml:
     desc: yamllint over the tree
-    cmd: yamllint --strict {{.KUBERNETES_DIR}} {{.TALOS_DIR}} {{.BOOTSTRAP_DIR}}
+    cmd: yamllint --strict {{.KUBERNETES_DIR}} {{.TALOS_DIR}} {{.BOOTSTRAP_DIR}} .github
 
   lint:kubeconform:
     desc: Validate rendered manifests against Kubernetes schemas

@@ -2,18 +2,20 @@
 
 !!! warning "UNTESTED"
 
-    Not yet executed on this cluster. See AGENTS.md rule 9. The controller and
-    guardrails can be proven on the throwaway Talos-in-Docker cluster; a real
-    workflow run against any scale set cannot, since that needs the real
-    GitHub App. See ADR 0015.
+    Steps 1-4 are done: the GitHub App exists (`fobiat-actions-runner-controller`,
+    app ID `4623315`), installed on all four repos, credential encrypted into
+    `controller/app/github-app.sops.yaml`, all four scale sets unsuspended.
+    What's still unproven is Step 5: a real workflow run showing
+    `containerMode: kubernetes` behaves as documented on this node. See
+    AGENTS.md rule 9 and ADR 0015.
 
 The controller and its resource guardrails are live once
 `kubernetes/apps/actions-runner-system` is merged. Four runner scale sets
-ship alongside it, each `spec.suspend: true`, one per private repo with a
-real CI pipeline today: `fobiat/AppleJackRP-sandbox`, `fobiat/Rivet`,
-`fobiat/rivet-workstation` and `fobiat/cairn`. All four reference one shared
-GitHub App that does not exist yet. This is how you create it and turn the
-scale sets on.
+ship alongside it, one per private repo with a real CI pipeline today:
+`fobiat/AppleJackRP-sandbox`, `fobiat/Rivet`, `fobiat/rivet-workstation` and
+`fobiat/cairn`. All four reference one shared GitHub App. Steps 1-4 below are
+kept as the reference procedure (and for adding a fifth repo later); skip to
+Step 5 to finish proving this out.
 
 ## Step 1: create the GitHub App
 
@@ -130,10 +132,28 @@ runbook's `UNTESTED` banner.
 
 ## Adding a fifth private repo later
 
-Copy one of the four app directories to a new one, change
-`githubConfigUrl`, the `OCIRepository`/`HelmRelease` names, and add its
-`ks.yaml` to `kubernetes/apps/actions-runner-system/kustomization.yaml`.
-`githubConfigSecret` stays `actions-runner-github-app` if the new repo is
-added to the existing App's installation (Install App page, add the repo to
-the same installation); only create a second App if that repo's blast
-radius genuinely needs to be separate from the other four's.
+This is now automatic (ADR 0016): `.github/workflows/sync-actions-runners.yaml` runs
+weekly and opens a PR for any private, non-archived, non-fork repo with a
+`.github/workflows` directory that doesn't have a scale set yet, installing the shared
+App on it automatically. Run it on demand from the Actions tab
+(`workflow_dispatch`) instead of waiting for the schedule.
+
+**One-time setup this automation needs, not yet done:** a classic PAT with the `repo`
+scope, stored as the `ARC_SYNC_PAT` repository secret. Create it at
+`https://github.com/settings/tokens/new` (Tokens (classic), scope: `repo`, no
+expiration or a long one since a lapsed token silently stops the automation rather than
+failing loudly), then set it directly rather than pasting it into chat:
+
+```bash
+gh secret set ARC_SYNC_PAT --repo fobiat/home-ops
+```
+
+(paste the token when prompted, or pipe it via stdin). See ADR 0016 for why this
+specific credential is needed and why it's broader than everything else in this repo.
+
+To do it by hand instead: copy one of the app directories to a new one, change
+`githubConfigUrl`, the `OCIRepository`/`HelmRelease` names, and add its `ks.yaml` to
+`kubernetes/apps/actions-runner-system/kustomization.yaml`. `githubConfigSecret` stays
+`actions-runner-github-app` if the new repo is added to the existing App's installation
+(Install App page, add the repo to the same installation); only create a second App if
+that repo's blast radius genuinely needs to be separate from the others'.
