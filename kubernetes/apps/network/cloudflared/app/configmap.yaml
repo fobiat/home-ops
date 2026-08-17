@@ -11,4 +11,9 @@ data:
     metrics: 0.0.0.0:2000
     no-autoupdate: true
     ingress:
+      - hostname: insights.fobiat.dev
+        service: https://cilium-gateway-external.network-public.svc.cluster.local:443
+        originRequest:
+          originServerName: insights.fobiat.dev
+          httpHostHeader: insights.fobiat.dev
       - service: http_status:404
