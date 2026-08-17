@@ -78,3 +78,4 @@ nav:
       - 0013 External exposure guardrails: adr/0013-external-exposure-guardrails.md
       - 0014 Umami analytics: adr/0014-umami-analytics.md
       - 0015 actions-runner-controller: adr/0015-actions-runner-controller.md
+      - 0016 actions-runner sync automation: adr/0016-actions-runner-sync-automation.md

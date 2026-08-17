@@ -132,10 +132,28 @@ runbook's `UNTESTED` banner.
 
 ## Adding a fifth private repo later
 
-Copy one of the four app directories to a new one, change
-`githubConfigUrl`, the `OCIRepository`/`HelmRelease` names, and add its
-`ks.yaml` to `kubernetes/apps/actions-runner-system/kustomization.yaml`.
-`githubConfigSecret` stays `actions-runner-github-app` if the new repo is
-added to the existing App's installation (Install App page, add the repo to
-the same installation); only create a second App if that repo's blast
-radius genuinely needs to be separate from the other four's.
+This is now automatic (ADR 0016): `.github/workflows/sync-actions-runners.yaml` runs
+weekly and opens a PR for any private, non-archived, non-fork repo with a
+`.github/workflows` directory that doesn't have a scale set yet, installing the shared
+App on it automatically. Run it on demand from the Actions tab
+(`workflow_dispatch`) instead of waiting for the schedule.
+
+**One-time setup this automation needs, not yet done:** a classic PAT with the `repo`
+scope, stored as the `ARC_SYNC_PAT` repository secret. Create it at
+`https://github.com/settings/tokens/new` (Tokens (classic), scope: `repo`, no
+expiration or a long one since a lapsed token silently stops the automation rather than
+failing loudly), then set it directly rather than pasting it into chat:
+
+```bash
+gh secret set ARC_SYNC_PAT --repo fobiat/home-ops
+```
+
+(paste the token when prompted, or pipe it via stdin). See ADR 0016 for why this
+specific credential is needed and why it's broader than everything else in this repo.
+
+To do it by hand instead: copy one of the app directories to a new one, change
+`githubConfigUrl`, the `OCIRepository`/`HelmRelease` names, and add its `ks.yaml` to
+`kubernetes/apps/actions-runner-system/kustomization.yaml`. `githubConfigSecret` stays
+`actions-runner-github-app` if the new repo is added to the existing App's installation
+(Install App page, add the repo to the same installation); only create a second App if
+that repo's blast radius genuinely needs to be separate from the others'.

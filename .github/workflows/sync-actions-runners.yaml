@@ -1,0 +1,92 @@
+---
+# Keeps actions-runner-system in sync with which private repos actually
+# have CI to speed up. See ADR 0015 and scripts/sync-actions-runners.sh.
+name: sync-actions-runners
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: jdx/mise-action@v3
+        with:
+          install: true
+          cache: true
+
+      # ARC_SYNC_PAT throughout, not the default GITHUB_TOKEN: pushes and PRs
+      # made with the default token don't trigger this repo's other
+      # workflows (GitHub's anti-recursion safeguard), which would leave the
+      # branch-protection-required `lint` check permanently missing on the
+      # PR this step opens.
+      - name: Discover and scaffold new private-repo runners
+        env:
+          ARC_SYNC_PAT: ${{ secrets.ARC_SYNC_PAT }}
+        run: bash scripts/sync-actions-runners.sh
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if [[ -z "$(git status --porcelain)" ]]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Lint
+        if: steps.changes.outputs.changed == 'true'
+        run: task lint
+
+      - name: Commit and open PR
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.ARC_SYNC_PAT }}
+        run: |
+          gh auth setup-git
+          repos="$(paste -sd, - added-repos.txt)"
+          rm -f added-repos.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B automation/sync-actions-runners
+          git add kubernetes/apps/actions-runner-system
+          git commit -m "feat(actions-runner-system): add runner scale sets for ${repos}"
+          git push --force origin automation/sync-actions-runners
+          body=$(printf 'Auto-scaffolded by sync-actions-runners.\n\nNew repos: %s\n\nAlready installed on the shared GitHub App. Review the generated manifests, then merge to activate.' "${repos}")
+          if gh pr view automation/sync-actions-runners >/dev/null 2>&1; then
+            gh pr edit automation/sync-actions-runners --body "${body}"
+          else
+            gh pr create --base main --head automation/sync-actions-runners \
+              --title "feat(actions-runner-system): add runner scale sets for new private repos" \
+              --body "${body}"
+          fi
+
+  notify-discord:
+    runs-on: ubuntu-latest
+    needs: [sync]
+    if: always()
+    steps:
+      - name: Post result
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          RESULT: ${{ needs.sync.result }}
+        run: |
+          [[ -z "${WEBHOOK}" ]] && { echo "no webhook configured, skipping"; exit 0; }
+          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          if [[ "${RESULT}" == "success" ]]; then
+            colour=3066993; status="passed"
+          else
+            colour=15158332; status="${RESULT}"
+          fi
+          payload=$(jq -n \
+            --arg t "sync-actions-runners ${status}" \
+            --arg d "[\`${GITHUB_REF_NAME}\`](${RUN_URL}) on ${GITHUB_REPOSITORY}" \
+            --argjson c "${colour}" \
+            '{embeds: [{title: $t, description: $d, color: $c}]}')
+          curl -sS -H "Content-Type: application/json" -d "${payload}" "${WEBHOOK}" >/dev/null
