@@ -1,0 +1,75 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: applejackrp-sandbox-runners
+spec:
+  interval: 1h
+  layerSelector:
+    mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
+    operation: copy
+  url: oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set
+  ref:
+    tag: 0.14.2
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: applejackrp-sandbox-runners
+spec:
+  interval: 1h
+  # Stays suspended until the GitHub App exists and
+  # applejackrp-sandbox-runner-github-app is a real SOPS secret, not this
+  # placeholder wiring. See ADR 0015 and github-app.PLACEHOLDER.yaml in this
+  # directory for the exact activation steps.
+  suspend: true
+  chartRef:
+    kind: OCIRepository
+    name: applejackrp-sandbox-runners
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
+  values:
+    githubConfigUrl: https://github.com/fobiat/AppleJackRP-sandbox
+    githubConfigSecret: applejackrp-sandbox-runner-github-app
+    controllerServiceAccount:
+      namespace: actions-runner-system
+      name: actions-runner-controller-gha-rs-controller
+    # PLAN.md's phase three section: start low on a single four-core node.
+    minRunners: 0
+    maxRunners: 2
+    # kubernetes mode: runner pods stay thin orchestrators, each workflow
+    # step runs as its own pod with no Docker daemon and no privileged
+    # sidecar. Talos has neither a Docker daemon nor loadable workload
+    # kernel modules, ruling out dind. See ADR 0015 for the alternatives
+    # considered.
+    containerMode:
+      type: kubernetes
+      kubernetesModeWorkVolumeClaim:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: local-path
+        resources:
+          requests:
+            storage: 2Gi
+    template:
+      spec:
+        containers:
+          - name: runner
+            image: ghcr.io/actions/actions-runner:latest
+            command: ["/home/runner/run.sh"]
+            # Single node, four cores. See AGENTS.md rule 7. The
+            # ResourceQuota and LimitRange in ../controller/app bound the
+            # per-step job pods this mode spawns; this bounds the runner's
+            # own control pod.
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                cpu: 500m
+                memory: 1Gi

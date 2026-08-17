@@ -1,0 +1,23 @@
+---
+# containerMode=kubernetes spawns a new pod per workflow step, using
+# whatever (or no) resources: block the workflow YAML declares. Without a
+# default here, an unbounded step pod is exactly the runaway matrix build
+# PLAN.md's phase three section warns about. `max` also caps any step that
+# does declare its own resources, so the ResourceQuota's ceiling can't be
+# reached by one oversized pod.
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: actions-runner-system
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 100m
+        memory: 128Mi
+      default:
+        cpu: 500m
+        memory: 512Mi
+      max:
+        cpu: "1"
+        memory: 1Gi

@@ -1,0 +1,9 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: actions-runner-system
+resources:
+  - ./helmrelease.yaml
+  # ./applejackrp-sandbox-runner-github-app.sops.yaml: add once the real
+  # GitHub App credentials are encrypted (see github-app.PLACEHOLDER.yaml in
+  # this dir), then flip helmrelease.yaml's spec.suspend to false.

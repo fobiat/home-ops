@@ -1,0 +1,18 @@
+---
+# CI jobs need arbitrary outbound access (package registries, GitHub itself,
+# whatever a workflow pulls), so egress stays open like every other netpol in
+# this repo. Ingress is scoped to the namespace: only the controller,
+# listener and runner pods talk to each other here, nothing else has a
+# reason to reach in.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+  egress:
+    - {}
+  ingress:
+    - from:
+        - podSelector: {}
