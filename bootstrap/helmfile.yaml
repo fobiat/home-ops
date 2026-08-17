@@ -73,9 +73,9 @@ releases:
           resources:
             requests:
               cpu: 10m
-              memory: 64Mi
-            limits:
               memory: 128Mi
+            limits:
+              memory: 512Mi
         # See the cilium-agent resources comment above for why this exists.
         envoy:
           resources:

@@ -48,9 +48,9 @@ spec:
     resources:
       requests:
         cpu: 10m
-        memory: 32Mi
-      limits:
         memory: 64Mi
+      limits:
+        memory: 256Mi
     env:
       # Directory, not a file: Gatus merges every *.yaml/*.yml under it and its
       # subdirectories (see docs/gatus.md), rather than reading one config file.
