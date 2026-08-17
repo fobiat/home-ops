@@ -136,3 +136,39 @@ documented on this specific node. Until both happen, all four scale sets are sus
 HelmReleases doing nothing, the same shape ADR 0010 accepted for tuppr's controller. The
 shared App is also a shared blast radius: a leaked key gives Administration write access
 to all four repos at once, not just one, the trade-off named above.
+
+## Addendum, 2026-08-17: proven live, twice, both times not the way this ADR assumed
+
+The first real workflow runs (the point this document said would prove
+`containerMode: kubernetes`) surfaced two things this ADR got wrong, not just unproven:
+
+**A job with no `container:` is refused outright, not run on the runner's own
+filesystem.** `ACTIONS_RUNNER_REQUIRE_JOB_CONTAINER` is set wherever `containerMode:
+kubernetes` is, and a bare job errors immediately ("Jobs without a job container are
+forbidden on this runner"). Every workflow targeting one of these scale sets needs an
+explicit `container:` naming an image with whatever the job needs.
+
+**Each job costs a *pair* of pods, not one.** The runner control pod (this document's
+`template.spec.containers[name=runner]`) spawns a second, separate job-container pod via
+its own k8s hook once a job starts — the control pod only orchestrates; the actual
+`npm`/`cargo`/`dotnet` work happens in the second pod. The ResourceQuota math above never
+accounted for this: 500m (control) + 500m (job-container, the LimitRange default) is
+1000m per job, double what was budgeted. Worse, the two pods fail differently: ARC's own
+reconciliation loop retries a blocked *control* pod gracefully every 30s, but a blocked
+*job-container* pod does not retry — it hard-fails the run. Two repos' jobs landing close
+together exhausted the quota and hard-failed rather than queuing.
+
+Fixed in the same pass as the listener resize below: the control pod's own resources cut
+to 25m/250m (it doesn't do the real work, so it doesn't need runner-workload sizing), and
+`limits.cpu` retuned to 1500m specifically so a *second* job's control pod is never
+admitted while a first job's pair is still up — any collision is caught at the
+gracefully-retried stage, not the hard-failing one. See `resourcequota.yaml`'s own comment
+for the arithmetic. This is tighter than the original 2 cores (50% of the node), not
+looser: 1.5 cores is 37.5%, a wider platform margin.
+
+Also discovered live: `rivet-workstation-runners`' listener pod had never come up at all
+(silently missing from `kubectl get pods` since day one) — the four listeners' *own*
+unsized resource footprint (500m each, the LimitRange default, for a long-poll HTTP
+client that needs a fraction of that) had already consumed the entire original quota
+before job pods entered the picture. Fixed via `listenerTemplate` overrides, 10m/100m
+each.
