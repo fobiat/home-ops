@@ -6,39 +6,41 @@ For why the guardrails are shaped this way, see
 
 ## What is public
 
-Nothing is reachable from the internet yet.
+`insights.fobiat.dev` is reachable from the internet as of 2026-08-17. Nothing else is.
 
 The `external` Gateway has one route, `umami-collect`, for
 `insights.fobiat.dev`. cloudflared has a matching ingress entry that reaches the
 external Gateway, and the Gateway accepts only the exact `/script.js` and
-`/api/send` paths. Public DNS is deliberately still absent: no CNAME points
-`insights.fobiat.dev` at the tunnel, so no client can enter this route.
+`/api/send` paths. A proxied CNAME points `insights.fobiat.dev` at the tunnel, and
+the Cloudflare WAF rate-limit rule for `/api/send` described below is live ahead of it,
+same order the hand-off required.
 
-Before creating that CNAME, add the Cloudflare WAF rate-limit rule for
-`/api/send` described in [ADR 0014](adr/0014-umami-analytics.md). The live
-route is a staged dependency, not evidence that analytics are publicly enabled.
+Kyle accepted the zone entitlement's 10-second block duration rather than upgrading
+for the originally designed 60 seconds (see [ADR 0014](adr/0014-umami-analytics.md)).
+Confirmed live with a 25-request burst against `/api/send`: requests 1 through 20
+returned Umami's own `400` for an empty payload, and 21 through 25 returned
+Cloudflare's `429`. `https://insights.fobiat.dev/script.js` returns `200` with the
+tracker script, and unrelated paths return the configured `404`. The Umami dashboard
+itself stays private at `umami.lab.fobiat.dev`.
 
 ## Enabling Umami collection
 
-This is the complete Cloudflare hand-off. It is a public-exposure change, so make
-the rate-limit rule before creating the DNS record.
+The Cloudflare hand-off below is complete. It is a public-exposure change, so the
+rate-limit rule was created before the DNS record, not after.
 
 1. In the `fobiat.dev` zone, create a proxied CNAME record named `insights` that
-   targets `50e8490f-820b-4e20-a076-65254e8ad157.cfargotunnel.com`.
+   targets `50e8490f-820b-4e20-a076-65254e8ad157.cfargotunnel.com`. Done.
 2. Spend the zone's one free-tier rate-limit rule on the ingest endpoint:
    - Expression: `(http.host eq "insights.fobiat.dev" and http.request.uri.path eq "/api/send")`
    - Characteristics: `cf.colo.id` and source IP. Cloudflare requires its
      colocation ID because it counts limits at the edge.
    - Rate: 20 requests per 10 seconds
-   - Action: block for 60 seconds. The current zone entitlement rejects this
-     duration and permits only 10 seconds, so do not create the CNAME until
-     that limitation is accepted or the entitlement changes.
-3. Do not add Bot Fight Mode or a challenge to this hostname. The tracker sends
+   - Action: block for 10 seconds, the zone entitlement's current maximum. Done.
+3. Bot Fight Mode and challenges stay off for this hostname. The tracker sends
    background requests, so either would break collection for real visitors.
 
-Afterwards, confirm that `https://insights.fobiat.dev/script.js` reaches the
-tracker and that unrelated paths still return the configured 404. The Umami
-dashboard stays private at `umami.lab.fobiat.dev`.
+Remaining: create the website in Umami and add its `data-website-id` to the personal
+site's tracker snippet, in the separate `fobiat.dev` repository.
 
 The complete answer to "what can enter through the external Gateway?" is:
 

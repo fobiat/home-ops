@@ -13,17 +13,20 @@ Umami requests 100m CPU and 128 MiB memory, and PostgreSQL requests 100m CPU and
 
 ## Public collection
 
-The browser collector is staged at `https://insights.fobiat.dev`, not enabled. The
+The browser collector is live at `https://insights.fobiat.dev` as of 2026-08-17. The
 cluster accepts only two exact paths through the external Gateway:
 
 - `/script.js`, the tracker script
 - `/api/send`, the event endpoint
 
-There is no public DNS CNAME yet, so those routes are unreachable from the internet.
-Before enabling collection, create the CNAME to the existing Cloudflare Tunnel,
-install the WAF rate limit for `/api/send`, create the website in Umami, and add its
-generated `data-website-id` to the personal site's tracker snippet. The site ID is
-application data, not a cluster secret, and does not belong in this repository.
+The proxied CNAME to the Cloudflare Tunnel and the zone's one free-tier WAF rate limit
+on `/api/send` (20 requests per 10 seconds per IP and `cf.colo.id`, 10-second block,
+the zone entitlement's maximum rather than the originally designed 60 seconds, Kyle's
+call) are both live. Confirmed with a real 25-request burst: the first 20 returned
+Umami's own `400` for an empty payload, and requests 21 through 25 returned Cloudflare's
+`429`. What's still needed to actually collect data: create the website in Umami, and
+add its generated `data-website-id` to the personal site's tracker snippet. The site ID
+is application data, not a cluster secret, and does not belong in this repository.
 
 The gateway path restriction is a safety boundary, not a substitute for Cloudflare's
 edge controls. See [Exposure](exposure.md) and
