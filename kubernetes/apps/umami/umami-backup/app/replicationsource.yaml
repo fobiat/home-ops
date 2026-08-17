@@ -1,0 +1,33 @@
+---
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: umami-pgdump
+spec:
+  sourcePVC: umami-pgdump
+  trigger:
+    schedule: "10 4 * * *"
+  restic:
+    repository: umami-pgdump-restic
+    copyMethod: Direct
+    pruneIntervalDays: 14
+    retain:
+      daily: 7
+      weekly: 5
+      monthly: 6
+    cacheCapacity: 512Mi
+    moverSecurityContext:
+      runAsUser: 26
+      runAsGroup: 26
+      fsGroup: 26
+    moverResources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 512Mi
+    moverVolumes:
+      - mountPath: repo
+        volumeSource:
+          persistentVolumeClaim:
+            claimName: volsync-repo

@@ -1,0 +1,73 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: umami-pgdump
+spec:
+  schedule: "5 3 * * *"
+  timeZone: Etc/UTC
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 600
+  successfulJobsHistoryLimit: 7
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: umami-pgdump
+        spec:
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 26
+            runAsGroup: 26
+            fsGroup: 26
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: dump
+              image: ghcr.io/cloudnative-pg/postgresql:18.4-minimal-trixie
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -eu
+                  timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
+                  temporary="/backup/.umami-${timestamp}.dump"
+                  destination="/backup/umami-${timestamp}.dump"
+                  pg_dump --dbname="$DATABASE_URL" --format=custom --file="$temporary"
+                  test -s "$temporary"
+                  mv "$temporary" "$destination"
+                  ls -1t /backup/umami-*.dump 2>/dev/null | tail -n "+$((RETAIN + 1))" | xargs -r rm -f --
+              env:
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: umami-db-app
+                      key: uri
+                - name: RETAIN
+                  value: "7"
+              volumeMounts:
+                - name: dumps
+                  mountPath: /backup
+                - name: temporary
+                  mountPath: /tmp
+              resources:
+                requests:
+                  cpu: 25m
+                  memory: 64Mi
+                limits:
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+                readOnlyRootFilesystem: true
+          volumes:
+            - name: dumps
+              persistentVolumeClaim:
+                claimName: umami-pgdump
+            - name: temporary
+              emptyDir: {}
