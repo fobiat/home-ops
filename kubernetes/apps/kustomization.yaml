@@ -19,4 +19,5 @@ resources:
   - ./network-public
   - ./cnpg-system
   - ./umami
+  - ./cairn
   - ./actions-runner-system
