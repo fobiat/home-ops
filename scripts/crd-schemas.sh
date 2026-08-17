@@ -15,3 +15,4 @@ chart() {
 }
 
 chart volsync 0.16.0 https://backube.github.io/helm-charts/
+chart cloudnative-pg 0.29.0 https://cloudnative-pg.github.io/charts

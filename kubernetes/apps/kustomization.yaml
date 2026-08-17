@@ -18,3 +18,4 @@ resources:
   - ./system-upgrade
   - ./network-public
   - ./cnpg-system
+  - ./umami
