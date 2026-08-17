@@ -17,11 +17,20 @@ spec:
   # inventory": cairn-backup is local-path with WaitForFirstConsumer, which
   # never reaches Bound until the backup CronJob's first scheduled run
   # actually mounts it. Waiting on it made this Kustomization NotReady
-  # indefinitely even though the Cluster itself was healthy the whole time.
+  # indefinitely even though the database itself was healthy the whole time.
+  #
+  # The target is the instance Pod, not the CNPG Cluster CR: confirmed live
+  # that Cluster never sets status.observedGeneration at all (empty, against
+  # metadata.generation: 1), which Flux's generic kstatus reader requires to
+  # trust a Ready condition, Cluster or not. A forced `flux reconcile` still
+  # timed out waiting on it. Pods follow the standard convention kstatus
+  # already understands. Single instance only (see database's own comments),
+  # so the name is stable; would need revisiting if this ever scales beyond
+  # one replica.
   healthChecks:
-    - apiVersion: postgresql.cnpg.io/v1
-      kind: Cluster
-      name: cairn-postgres
+    - apiVersion: v1
+      kind: Pod
+      name: cairn-postgres-1
       namespace: cairn
   interval: 1h
   timeout: 15m
