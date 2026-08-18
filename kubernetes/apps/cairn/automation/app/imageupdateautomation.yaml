@@ -16,8 +16,14 @@ spec:
       author:
         name: fluxcdbot
         email: fluxcdbot@users.noreply.github.com
+      # .Updated is gone in this Flux version (v2.9.4); .Changed.Objects is
+      # its replacement, keyed by the changed object with one entry per
+      # setter that fired on it.
       messageTemplate: |
-        ci: bump cairn-web to {{range .Updated.Images}}{{println .}}{{end}}
+        ci: bump cairn-web to
+        {{- range $resource, $changes := .Changed.Objects}}
+        {{- range $changes}} {{.NewValue}}{{end}}
+        {{- end}}
     push:
       branch: main
   update:
