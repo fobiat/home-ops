@@ -1,11 +1,17 @@
 ---
-# Opens an issue when the gate fails on main, so a broken main is tracked rather than
+# Opens an issue when a gate fails on main, so a broken main is tracked rather than
 # noticed three weeks later. Reuses one issue per workflow instead of opening a new one
-# on every failed run, and closes it when the gate goes green again.
+# on every failed run, and closes it when that gate goes green again.
+#
+# `sync-actions-runners` is the one that most needs this: it only runs on a weekly cron,
+# so a failure there is invisible until someone thinks to open the Actions tab. `docs`
+# publishes the Pages site from main and fails the same way, quietly. `flux-diff` is
+# deliberately absent: it is pull_request-only, so its failures are already unmissable
+# on the PR itself and would never produce a broken main to track.
 name: ci-failure-issue
 on:
   workflow_run:
-    workflows: ["lint"]
+    workflows: ["lint", "docs", "sync-actions-runners"]
     types: [completed]
     branches: ["main"]
 
@@ -26,9 +32,13 @@ jobs:
           RUN_URL: ${{ github.event.workflow_run.html_url }}
           SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
-          title="CI failing on main: ${WORKFLOW}"
+          export TITLE="CI failing on main: ${WORKFLOW}"
+          # Matched exactly rather than through `--search ... in:title`. All three titles
+          # share the "CI failing on main:" prefix, and search tokenises, so a fuzzy match
+          # can rank another workflow's issue first and get it closed by this run.
           existing=$(gh issue list --repo "${REPO}" --state open --label ci-failure \
-            --search "${title} in:title" --json number --jq '.[0].number // empty')
+            --limit 100 --json number,title \
+            --jq 'map(select(.title == env.TITLE)) | .[0].number // empty')
 
           if [[ "${CONCLUSION}" == "success" ]]; then
             if [[ -n "${existing}" ]]; then
@@ -49,6 +59,6 @@ jobs:
           if [[ -n "${existing}" ]]; then
             gh issue comment "${existing}" --repo "${REPO}" --body "${body}"
           else
-            gh issue create --repo "${REPO}" --title "${title}" \
+            gh issue create --repo "${REPO}" --title "${TITLE}" \
               --label ci-failure --label area/ci --body "${body}"
           fi
