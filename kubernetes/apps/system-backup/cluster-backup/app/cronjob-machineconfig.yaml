@@ -23,7 +23,11 @@ spec:
           labels:
             app.kubernetes.io/name: machineconfig-backup
         spec:
-          restartPolicy: OnFailure
+          # Never, not OnFailure: OnFailure restarts the container in place, so each
+          # attempt overwrites the last terminated state and a failed run leaves no
+          # exit code behind. Both 2026-08-17 and 2026-08-21 03:15 failures were
+          # undiagnosable for this reason. Never gives one retained pod per attempt.
+          restartPolicy: Never
           initContainers:
             # `talosctl get` only ever writes to stdout, and the talosctl image has no
             # shell to redirect it with. This container copies a static busybox binary
