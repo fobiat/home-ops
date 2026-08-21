@@ -37,6 +37,15 @@ spec:
     remediation:
       retries: 3
       strategy: rollback
+  # The Discord webhook is SOPS-encrypted and injected here rather than written
+  # into values, which are plaintext in git. targetPath pins a list index, so if
+  # the receivers list below is ever reordered this silently targets the wrong
+  # receiver: receivers[0] is 'null', receivers[1] is 'discord'.
+  valuesFrom:
+    - kind: Secret
+      name: alertmanager-discord-webhook
+      valuesKey: webhook-url
+      targetPath: alertmanager.config.receivers[1].discord_configs[0].webhook_url
   values:
     defaultRules:
       rules:
@@ -64,11 +73,6 @@ spec:
               resources:
                 requests:
                   storage: 2Gi
-        # Webhook URL is SOPS-encrypted (alertmanager-discord-webhook.sops.yaml)
-        # and mounted as a file rather than inlined here, since HelmRelease
-        # values are plaintext in git.
-        secrets:
-          - alertmanager-discord-webhook
       config:
         global:
           resolve_timeout: 5m
@@ -88,7 +92,13 @@ spec:
           - name: 'null'
           - name: discord
             discord_configs:
-              - webhook_url_file: /etc/alertmanager/secrets/alertmanager-discord-webhook/webhook-url
+              # webhook_url is injected by the valuesFrom block above, so that
+              # the URL never appears in git. It cannot be read from a file:
+              # prometheus-operator's discordConfig has webhook_url only, with
+              # no webhook_url_file, unlike slack and mattermost. The operator
+              # strict-unmarshals this config, so an unknown key here means no
+              # StatefulSet is created at all and every alert silently stops.
+              - send_resolved: true
         templates:
           - '/etc/alertmanager/config/*.tmpl'
     kubeProxy:
