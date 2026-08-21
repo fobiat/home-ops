@@ -1,0 +1,25 @@
+---
+# Owned here rather than alongside the Deployment in AppleJackRP-sandbox's own
+# infra/kubernetes/app (unlike every other applejack resource - see the
+# app/ks.yaml comment) because the WARP private-network route needs a stable
+# ClusterIP to target, and that route gets set up before this app's own repo
+# does. The selector is a cross-repo contract: whatever Deployment
+# AppleJackRP-sandbox ships must carry these same labels, or this Service
+# stays at zero endpoints.
+#
+# Port is a placeholder - confirm the dedicated server's actual bind port
+# during the Linux spike test and update it here.
+apiVersion: v1
+kind: Service
+metadata:
+  name: applejack-server
+  labels:
+    app.kubernetes.io/name: applejack-server
+spec:
+  selector:
+    app.kubernetes.io/name: applejack-server
+  ports:
+    - name: game
+      port: 27015
+      targetPort: 27015
+      protocol: UDP

@@ -10,6 +10,13 @@ data:
     protocol: http2
     metrics: 0.0.0.0:2000
     no-autoupdate: true
+    # Lets this tunnel also carry UDP/private-network traffic for WARP-enrolled
+    # devices (needed for applejack's game traffic, which can't ride the
+    # hostname ingress below - that's HTTP/HTTPS/TCP only). The actual route
+    # (CIDR -> tunnel) and the Access enrollment policy are Cloudflare account
+    # objects, not config here; see kubernetes/apps/applejack/network.
+    warp-routing:
+      enabled: true
     ingress:
       - hostname: insights.fobiat.dev
         service: https://cilium-gateway-external.network-public.svc.cluster.local:443

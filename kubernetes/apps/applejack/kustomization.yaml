@@ -6,5 +6,7 @@ resources:
   - ./namespace/ks.yaml
   - ./database/ks.yaml
   - ./registry-auth/ks.yaml
+  - ./network/ks.yaml
+  - ./netpol/ks.yaml
   - ./app/ks.yaml
   - ./automation/ks.yaml

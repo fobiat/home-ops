@@ -1,0 +1,47 @@
+---
+# Same allow-egress + same-namespace-ingress baseline as default/netpol and
+# monitoring/netpol: lets the game server pod and CNPG's postgres pod (both
+# land in applejack) talk to each other and out to the internet (steamcmd
+# updates, etc), while switching the namespace to default-deny for anything
+# else - there is no cluster-wide default-deny, so an app namespace with no
+# NetworkPolicy at all is fully open.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+  egress:
+    - {}
+  ingress:
+    - from:
+        - podSelector: {}
+---
+# The only intended path in: cloudflared's WARP private-network route, which
+# proxies from cloudflared's own pod IPs in the network namespace, not
+# through the Cilium Gateway (so this needs a plain namespace+pod selector,
+# not the gateway CiliumNetworkPolicy trick default/netpol uses).
+#
+# Port is the same placeholder as network/app/service.yaml - update both
+# together once the real bind port is confirmed.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-cloudflared-ingress
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: applejack-server
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: network
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: cloudflared
+      ports:
+        - protocol: UDP
+          port: 27015
