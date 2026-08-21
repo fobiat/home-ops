@@ -7,4 +7,5 @@ resources:
   - ./rivet/ks.yaml
   - ./rivet-workstation/ks.yaml
   - ./cairn/ks.yaml
+  - ./fobiat-dev/ks.yaml
   - ./netpol/ks.yaml
