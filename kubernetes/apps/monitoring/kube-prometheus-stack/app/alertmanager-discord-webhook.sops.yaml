@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: alertmanager-discord-webhook
+type: Opaque
+stringData:
+    webhook-url: ENC[AES256_GCM,data:5/d8ScZt+8E7dBofAgIUQyJgnckmjCTs05T2Z2U8VM/NVI4VpH/76AmHm+Pv4drErCRmGC17FrxIARmWh0dnQraun0wpkRuZ48E1mY+CjUV9BGqOZkXzuvJmmdjz0K499Eak802xQN4FsaT+6gM6ExAXsJ/bj2h2dWRlNA==,iv:4/o7Wn1cUmOwXx6Xe6wuydvh/SQ6LUNZho+O21peXRI=,tag:CmJ+kl90jl0efPbVFfE5pA==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBVYmZJYjhTVFFJa1lSRkxD
+            bG15bVZmdDFEMW1sTnFHNHF0SEtxYjdJaFdjCk4vZWRvS2kxMXUwRldKSTBCeXVB
+            T3lYa2JaL1N6MGhtbm1HMFZtWHZiWmcKLS0tIDBIc3V2VE1US2J2Y0hFejNoNFlH
+            NHcyVnlEVGV5MWhoSm1oT1hmWjlDejgKA/rvRgGXTKdHFMnD/oa5lAwIoixH2yBi
+            5k5yJ5BqP8EoGBYJq+y/T1U2IZZ3tLtKhCMn4NhbflOEAvBr1etG+A==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age16p8gv792c4npw2xt3pq8yhu23u47v2sprdatceq779r34nzp24pqrd92vg
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-08-21T12:08:05Z"
+    mac: ENC[AES256_GCM,data:7VocQJN6p1+uWSatSr/GGboYL+CMG5a/VXhj/NCDBuA5+ucaEKVrVODdxNURZCaLdgSAjHQu4ycStk82UiuW6iPCX1Q9NveIFEV3Gv+/4gUliEAUCJ+SYVy+7ZHmz9RxfonBrWbOMsDlRVPm9iIgx3Y1SODCkaX1KWVLGGYvTDg=,iv:pwp8a8aAt3Md2N1fINUq9crSu9rVgHqaxOiectJq56A=,tag:Yn2Dgyf+OtYpbsH8HDaJwQ==,type:str]
+    version: 3.13.3

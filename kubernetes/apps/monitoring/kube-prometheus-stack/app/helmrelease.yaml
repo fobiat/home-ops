@@ -47,11 +47,7 @@ spec:
         kubeProxy: false
         windows: false
     alertmanager:
-      # Config below is complete and ready, but stays off until the home-ops
-      # Discord webhook exists and is committed as
-      # alertmanager-discord-webhook.sops.yaml. Enabling it first would leave
-      # the pod in CreateContainerConfigError on the missing secret mount.
-      enabled: false
+      enabled: true
       alertmanagerSpec:
         resources:
           requests:
