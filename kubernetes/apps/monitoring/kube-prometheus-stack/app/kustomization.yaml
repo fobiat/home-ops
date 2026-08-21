@@ -9,6 +9,7 @@ resources:
   - ./httproute.yaml
   - ./gatus-check.yaml
   - ./prometheusrule-node.yaml
+  - ./prometheusrule-control-plane.yaml
   - ./volsync-repo-pvc.yaml
   - ./grafana-restic-secret.sops.yaml
   - ./replicationsource-grafana.yaml
