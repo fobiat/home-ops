@@ -1,0 +1,83 @@
+---
+# No readiness/liveness probes: this isn't HTTP, and SDR's whole point is that
+# nothing else can be relied on to be listening on a known port either (see
+# server/entrypoint.sh in AppleJackRP-sandbox - direct-connect, the one mode
+# with a probeable port, is opt-in and off by default). A crashed process
+# still gets restarted by the container runtime regardless of probes; what
+# probes would add here is detecting a hang, and guessing at a check for that
+# without a verified protocol risks killing a healthy server on a bad probe
+# instead. Revisit once there's a confirmed way to ask this server "are you
+# actually serving."
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: applejackrp-dev
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  replicas: 1
+  # Not RollingUpdate: the PVC below is ReadWriteOnce, and a second pod
+  # trying to mount it before the first releases it would just hang Pending.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: applejackrp-dev
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: applejackrp-dev
+    spec:
+      containers:
+        - name: server
+          # {"$imagepolicy": "flux-system:applejackrp-sandbox"}
+          # No ImageUpdateAutomation exists yet to act on that setter (see
+          # automation/app/kustomization.yaml's comment on why), so this tag
+          # is a placeholder until either that's wired up or it's bumped by
+          # hand. It also doesn't exist yet: server-image in
+          # AppleJackRP-sandbox's ci.yml needs kyle-X1Carbon online to
+          # actually publish it.
+          image: ghcr.io/fobiat/applejackrp-sandbox:latest
+          env:
+            - name: SERVER_NAME
+              value: "AppleJackRP Dev"
+            - name: GSLT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: applejackrp-gslt
+                  key: token
+                  # Without this the server still starts (server/entrypoint.sh
+                  # warns rather than refuses), but per the SDR join-flow
+                  # research, the GSLT is what gives the server a persistent
+                  # Steam ID to generate a join link from - not optional for
+                  # anyone to actually be able to connect. Secret doesn't
+                  # exist yet; create it the same way as ghcr-pull-secret
+                  # (see registry-auth/app/kustomization.yaml's note).
+                  optional: true
+          volumeMounts:
+            - name: wine-data
+              mountPath: /home/container/.wine
+          # Reasoned starting point, not measured: Wine running a Source
+          # 2-class engine under emulation is heavier than anything else on
+          # this single 4-core/32GB node, and nothing here has been load
+          # tested with real players. Expect to revisit after the first
+          # real session.
+          resources:
+            requests:
+              cpu: "1"
+              memory: 2Gi
+            limits:
+              cpu: "3"
+              memory: 4Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            # Not runAsNonRoot / readOnlyRootFilesystem: the base image runs
+            # as root by default and Wine writes across its prefix at
+            # runtime, both reproduced locally in this session. Untested
+            # whether either could be tightened without breaking Wine.
+      volumes:
+        - name: wine-data
+          persistentVolumeClaim:
+            claimName: applejackrp-wine-data
