@@ -86,18 +86,20 @@ up until the node runs out of room. `kubernetes/apps/actions-runner-system/contr
 gives every container in the namespace a default request/limit and, more importantly, a
 `max` (1 core / 1Gi) that applies even to steps that do declare their own `resources:`.
 `resourcequota.yaml` in the same directory is the namespace-wide backstop on top of that:
-requests capped at 1 core / 2Gi, limits at 2 cores / 4Gi. On a four-core node this leaves
-at least half the machine for the platform regardless of what CI is doing, matching
+requests capped at 1 core / 2Gi, limits at 1500m / 4Gi. On a four-core node that leaves
+well over half the machine for the platform regardless of what CI is doing, matching
 AGENTS.md rule 7. A build that would exceed the quota does not take anything down; its
-pod simply stays `Pending` until room frees up.
+pod simply stays `Pending` until room frees up. The limits figure started at 2 cores and
+was cut on 2026-08-17; the addendum below has the arithmetic and the reason.
 
 This quota is deliberately namespace-wide rather than per-scale-set, which matters now
-that there are four. `maxRunners: 2` on each of the four `AutoscalingRunnerSet`s is a
+that there are four. `maxRunners: 1` on each of the four `AutoscalingRunnerSet`s is a
 local, per-repo cap; nothing coordinates between them, so in principle all four could
-try to scale to 2 at once. The shared quota is what actually stops that from mattering:
+try to scale at once. The shared quota is what actually stops that from mattering:
 whichever pods land first get the room, the rest queue as `Pending` rather than the node
-seeing four repos' worth of unbounded concurrent builds. `maxRunners: 2` per repo, per
-`PLAN.md`'s explicit "start at 2," stays the same regardless of repo count.
+seeing four repos' worth of unbounded concurrent builds. This started at `maxRunners: 2`,
+per `PLAN.md`'s explicit "start at 2," and was cut to 1 on 2026-08-17 once each job
+turned out to cost a pair of pods.
 
 ### Suspended until the credential exists
 

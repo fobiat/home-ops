@@ -30,25 +30,36 @@
     and `AppleJackRP-sandbox` remain entirely unproven — none of their
     workflows have been pointed at their scale set's label yet.
 
-    **Separate finding, same session: this node is CPU-starved, not
-    memory-starved.** While watching PR #9, `kube-scheduler` and
-    `kube-controller-manager` were both `CrashLoopBackOff`, and new pods took
-    several minutes to get scheduled. Root cause confirmed directly: both
-    pods' last-terminated state was `reason: Error` (exit 1), not
-    `OOMKilled`, and their logs show leader-election lease renewals timing
-    out (`context deadline exceeded` calling the local apiserver), the
-    classic symptom of a process not getting enough CPU time to make its own
-    HTTP calls before the request deadline. `/proc/loadavg` read 17-26 on
-    this node's 4 allocatable cores for most of the session. `kubectl top`
-    isn't available (no metrics-server), so this was confirmed via
-    `talosctl processes` and `talosctl read /proc/loadavg` directly. The
-    only actual OOM-kill in `dmesg` during the same window was an unrelated
-    12 MB `prometheus-conf` init container. This resolved on its own as CI
-    load dropped, but it means bursts of concurrent CI (four scale sets
-    sharing one node, on top of the existing monitoring/cilium/cnpg stack)
-    can degrade control-plane stability, not just runner-pod scheduling
-    latency. Worth a second node before relying on this for anything
-    higher-stakes than CI.
+    **Separate finding, same session, and the first diagnosis was wrong.**
+    While watching PR #9, `kube-scheduler` and `kube-controller-manager` were
+    both `CrashLoopBackOff` and new pods took minutes to schedule. Both pods'
+    last-terminated state was `reason: Error` (exit 1), not `OOMKilled`, and
+    their logs showed leader-election renewals timing out (`context deadline
+    exceeded` against the local apiserver). `/proc/loadavg` read 17-26 on
+    four allocatable cores, so this was written up as CPU starvation and
+    PR #93 shipped 200m CPU requests on both as the mitigation. **The
+    restarts never stopped.**
+
+    Re-measured on 2026-08-21 with no CI running at all: CPU utilisation 29%
+    and cpu PSI wait 0.11, against `pgmajfault` at 208/s sustained (one 10s
+    sample caught 714/s), `MemAvailable` at 29.1% of total, and `sda` reads
+    of 80-101 MB/s against roughly 323 KB/s of writes. The node is page-cache
+    starved. Reclaim evicts executable pages, processes block faulting them
+    back in, and `kube-scheduler`'s 5-second lease renewal blows its
+    deadline. The high load average was processes blocked on disk, not
+    contention for cores. Two details pin it at node level rather than
+    ADR 0007's cgroup level: no container exceeds 68% of its own memory
+    limit, and reads dwarf writes by two orders of magnitude.
+
+    **The fix is RAM, not a second node.** The host has 32GB and the VM has
+    8GB; 16GB takes page cache from roughly 2.7GB to 10GB, and ADR 0007
+    already performed this same fix once at the previous size. That keeps
+    ADR 0005's single-node decision intact. `--kube-reserved` /
+    `--system-reserved`, `cpuManagerPolicy: static` and PriorityClass are all
+    dead ends here: none of them touch page reclaim, and on Talos the
+    control-plane static pods live in `kubepods` rather than the reserved
+    slices. Concurrent CI still makes the bursts worse, so treat it as an
+    aggravator of a memory problem rather than the cause.
 
 The controller and its resource guardrails are live once
 `kubernetes/apps/actions-runner-system` is merged. Four runner scale sets
