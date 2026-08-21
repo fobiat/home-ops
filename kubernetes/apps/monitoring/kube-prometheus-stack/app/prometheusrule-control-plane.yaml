@@ -1,0 +1,98 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: control-plane-health
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: control-plane-health.rules
+      rules:
+        # The shipped KubeSchedulerDown needs absent(up) for 15m. These restart
+        # and recover in seconds, so it never fires. Counting restarts does.
+        - alert: ControlPlaneStaticPodRestarting
+          expr: >-
+            increase(kube_pod_container_status_restarts_total{
+            namespace="kube-system",
+            pod=~"kube-(scheduler|controller-manager|apiserver)-talos-1"}[1h]) > 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: A control-plane static pod restarted in the last hour
+            description: >-
+              {{ $labels.pod }} restarted. On a single node this stalls new pod
+              scheduling until the lease is reacquired. Check
+              `.status.containerStatuses[0].lastState`: exit 1 with a
+              leaderelection timeout is page-cache starvation, not CPU.
+
+    - name: node-saturation.rules
+      rules:
+        # The node-exporter mixin's threshold is 500/s. A healthy node sits
+        # under 5/s, and this one ran at 208/s while the control plane crashed.
+        - alert: NodeMajorPageFaultsElevated
+          expr: rate(node_vmstat_pgmajfault[15m]) > 100
+          for: 15m
+          labels:
+            severity: critical
+          annotations:
+            summary: Node is faulting pages back in from disk
+            description: >-
+              {{ $value | printf "%.0f" }} major faults/sec. Executable pages are
+              being evicted and re-read, which blocks processes on disk and blows
+              5-second lease deadlines. Check MemAvailable before blaming CPU.
+
+        - alert: NodeMemoryLow
+          expr: >-
+            node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.35
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: Node has under 35 percent of memory available
+            description: >-
+              Page cache is being squeezed. This precedes the major-fault storm
+              rather than following it.
+
+        # PSI catches reclaim pressure that RSS-based rules miss entirely,
+        # which is the lesson ADR 0007 was written to record.
+        - alert: NodeMemoryStalled
+          expr: rate(node_pressure_memory_stalled_seconds_total[10m]) > 0.01
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: Tasks are stalling on memory reclaim
+            description: >-
+              Stalled {{ $value | humanizePercentage }} of wall time.
+
+        - alert: NodeCPUStalled
+          expr: rate(node_pressure_cpu_waiting_seconds_total[10m]) > 0.5
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: Tasks are queueing for CPU
+            description: >-
+              Waiting {{ $value | humanizePercentage }} of wall time. This is the
+              genuine CPU-starvation signal, distinct from memory stalls.
+
+    - name: actions-runner.rules
+      rules:
+        # The quota is designed to queue a second job rather than fail it, so
+        # Pending is correct briefly and a defect if it persists.
+        - alert: RunnerPodPending
+          expr: >-
+            kube_pod_status_phase{namespace="actions-runner-system",
+            phase="Pending"} == 1
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: A runner pod has been Pending for 10 minutes
+            description: >-
+              {{ $labels.pod }} is not being admitted. Check the namespace
+              ResourceQuota and whether the LimitRange max is below what the
+              job container asks for.
