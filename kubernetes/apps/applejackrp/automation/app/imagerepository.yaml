@@ -1,0 +1,14 @@
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+metadata:
+  name: applejackrp-sandbox
+spec:
+  # Guessed at the ghcr path AppleJackRP-sandbox's own name would produce.
+  # Confirm against whatever the repo's server-image build workflow actually
+  # pushes once that workflow exists, and correct this if it differs.
+  image: ghcr.io/fobiat/applejackrp-sandbox
+  interval: 5m
+  # Private package, same as cairn-web: needs read:packages credentials.
+  secretRef:
+    name: ghcr-pull-secret

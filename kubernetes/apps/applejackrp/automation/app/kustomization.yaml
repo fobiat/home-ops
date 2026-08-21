@@ -1,0 +1,20 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./imagerepository.yaml
+  - ./imagepolicy.yaml
+  # ghcr-pull-secret.sops.yaml belongs here too (flux-system's own copy,
+  # separate from registry-auth's, matching cairn/automation) — same
+  # not-created-yet reason as registry-auth/app.
+  #
+  # imageupdateautomation.yaml deliberately isn't scaffolded yet. cairn's
+  # points at cairn's own repo, using a write-scoped deploy key created just
+  # for that (cairn/source/app/git-auth.sops.yaml). This app's manifests are
+  # staying local to home-ops instead, so its ImageUpdateAutomation would
+  # need push access to *this* repo — either the flux-system deploy key
+  # already has that (unconfirmed) or a new home-ops-scoped write key is
+  # needed, and that's a bigger grant than a single-repo key. Also worth
+  # deciding deliberately: auto-bumping a live game server's image restarts
+  # it and kicks anyone connected, so a straight-to-main auto-push may not
+  # be the right default the way it is for cairn's stateless web app.
