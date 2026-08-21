@@ -42,6 +42,18 @@ spec:
         memory: 64Mi
       limits:
         memory: 256Mi
+    # The chart defaults to failureThreshold 2 at a 10s period, so ~20s of
+    # unresponsiveness restarts the container. On this node that is not a
+    # liveness signal: page-cache reclaim evicts executable pages and a process
+    # blocks faulting them back in, which is the same mechanism that makes
+    # kube-scheduler miss its 5s lease. It restarted external-dns 198 times and
+    # the webhook 184, both within ten seconds of each other, which is a
+    # node-wide stall rather than either process hanging. 90s to notice a real
+    # hang is fine for something that reconciles once a minute.
+    livenessProbe:
+      periodSeconds: 15
+      timeoutSeconds: 10
+      failureThreshold: 6
     provider:
       name: webhook
       webhook:
@@ -70,3 +82,8 @@ spec:
             memory: 32Mi
           limits:
             memory: 64Mi
+        # Same reasoning as the external-dns container above.
+        livenessProbe:
+          periodSeconds: 15
+          timeoutSeconds: 10
+          failureThreshold: 6
