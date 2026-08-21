@@ -67,6 +67,35 @@ Tailscale runs as a Talos system extension rather than in the cluster, so the no
 reachable before Kubernetes starts. That matters on the day the cluster is the thing that
 is broken.
 
+## CI runners
+
+Private repos run their GitHub Actions on this cluster rather than on GitHub's
+hosted runners. One
+[actions-runner-controller](https://github.com/actions/actions-runner-controller)
+scale set per repo, each scaling from zero, so an idle repo costs one small
+listener pod and nothing else.
+
+They run in `containerMode: kubernetes`, which means every job needs a
+`container:`. Talos has no Docker daemon and cannot load workload kernel
+modules, so the usual docker-in-docker mode is not available here. See
+[ADR 0015](docs/adr/0015-actions-runner-controller.md).
+
+`maxRunners` is 1 per repo. The real ceiling is the namespace ResourceQuota,
+which is what actually stops several repos building at once from taking the node
+down. `scripts/sync-actions-runners.sh` adds a scale set for any private repo
+that has CI and does not have one yet.
+
+**This repository is deliberately not one of them.** It is public, and a
+self-hosted runner on a public repo lets a fork's pull request run its own code
+on the cluster. home-ops uses GitHub-hosted runners for that reason alone.
+
+A side effect worth knowing: because self-hosted runners do not consume hosted
+minutes, they keep working when the account's hosted minutes are not available.
+
+Details, including how to add a repo and what the shared GitHub App has to have
+access to, are in the
+[runbook](docs/runbooks/actions-runner-controller.md).
+
 ## Backups
 
 Three things get backed up, on their own schedules, through
