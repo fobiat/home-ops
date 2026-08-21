@@ -19,11 +19,17 @@ spec:
       # .Updated is gone in this Flux version (v2.9.4); .Changed.Objects is
       # its replacement, keyed by the changed object with one entry per
       # setter that fired on it.
+      # [skip ci] is load-bearing, not cosmetic. cairn's CI triggers on every
+      # push to main with no path filter, and its image job tags by timestamp,
+      # so a bump commit built a new tag, which this automation then bumped
+      # again: a closed loop that rebuilt cairn every 5 minutes for 62 hours
+      # from 2026-08-18. Rebuilding identical source is waste on its own; on a
+      # page-cache-starved node it also competes with the workloads.
       messageTemplate: |
         ci: bump cairn-web to
         {{- range $resource, $changes := .Changed.Objects}}
         {{- range $changes}} {{.NewValue}}{{end}}
-        {{- end}}
+        {{- end}} [skip ci]
     push:
       branch: main
   update:
