@@ -1,0 +1,9 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: applejackrp
+components:
+  # Not components/namespace: the dedicated server pod will need a local-path
+  # PVC for downloaded engine/gamemode content, which needs the privileged
+  # pod-security label the same way cairn's namespace does.
+  - ../../../../components/namespace-privileged

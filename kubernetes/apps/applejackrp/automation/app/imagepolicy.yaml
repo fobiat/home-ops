@@ -1,0 +1,16 @@
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+metadata:
+  name: applejackrp-sandbox
+spec:
+  imageRepositoryRef:
+    name: applejackrp-sandbox
+  # Mirrors cairn-web's convention (YYYYMMDDHHmmss tag, numerical ascending)
+  # on the assumption the dev-build workflow adopts the same scheme. Revisit
+  # once that workflow is written.
+  filterTags:
+    pattern: "^[0-9]{14}$"
+  policy:
+    numerical:
+      order: asc
