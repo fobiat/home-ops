@@ -1,0 +1,33 @@
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageUpdateAutomation
+metadata:
+  name: applejack-server
+spec:
+  interval: 5m
+  sourceRef:
+    kind: GitRepository
+    name: applejack
+  git:
+    checkout:
+      ref:
+        branch: main
+    commit:
+      author:
+        name: fluxcdbot
+        email: fluxcdbot@users.noreply.github.com
+      # [skip ci] is load-bearing, not cosmetic: without it, a CI trigger on
+      # every push to main plus a timestamp-tagged image job closes a loop
+      # with this automation's own bump commits. Cost cairn 62 hours of
+      # constant rebuilds before it was caught (see cairn's
+      # imageupdateautomation.yaml).
+      messageTemplate: |
+        ci: bump applejack-server to
+        {{- range $resource, $changes := .Changed.Objects}}
+        {{- range $changes}} {{.NewValue}}{{end}}
+        {{- end}} [skip ci]
+    push:
+      branch: main
+  update:
+    path: ./infra/kubernetes/app
+    strategy: Setters

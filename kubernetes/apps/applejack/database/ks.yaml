@@ -1,0 +1,30 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: applejack-db
+  namespace: flux-system
+spec:
+  targetNamespace: applejack
+  dependsOn:
+    - name: applejack-source
+    - name: applejack-namespace
+    - name: cnpg-operator
+  path: ./infra/kubernetes/database
+  prune: true
+  # See cairn-db for why this is false with an explicit healthCheck instead
+  # of a bare wait: true (kubernetes/apps/cairn/database/ks.yaml).
+  wait: false
+  # Assumes the CNPG Cluster in AppleJackRP-sandbox's infra/kubernetes/database
+  # is named applejack-postgres (single instance, so pod -1 is stable). Update
+  # this if that repo names it differently.
+  healthChecks:
+    - apiVersion: v1
+      kind: Pod
+      name: applejack-postgres-1
+      namespace: applejack
+  interval: 1h
+  timeout: 15m
+  sourceRef:
+    kind: GitRepository
+    name: applejack

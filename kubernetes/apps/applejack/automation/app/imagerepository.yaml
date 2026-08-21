@@ -1,0 +1,12 @@
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+metadata:
+  name: applejack-server
+spec:
+  # Placeholder: point this at whatever CI in AppleJackRP-sandbox actually
+  # publishes the dedicated server image as.
+  image: ghcr.io/fobiat/applejack-server
+  interval: 5m
+  secretRef:
+    name: ghcr-pull-secret

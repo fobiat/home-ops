@@ -20,4 +20,5 @@ resources:
   - ./cnpg-system
   - ./umami
   - ./cairn
+  - ./applejack
   - ./actions-runner-system

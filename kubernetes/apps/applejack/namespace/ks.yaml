@@ -1,0 +1,16 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: applejack-namespace
+  namespace: flux-system
+spec:
+  targetNamespace: applejack
+  path: ./kubernetes/apps/applejack/namespace/app
+  prune: true
+  wait: true
+  interval: 1h
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system

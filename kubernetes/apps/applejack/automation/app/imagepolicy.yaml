@@ -1,0 +1,16 @@
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+metadata:
+  name: applejack-server
+spec:
+  imageRepositoryRef:
+    name: applejack-server
+  # Same fixed-width timestamp convention as cairn-web: have CI push a
+  # YYYYMMDDHHmmss tag on every build so numerical ordering picks the actual
+  # newest one, since commit SHAs don't sort chronologically.
+  filterTags:
+    pattern: "^[0-9]{14}$"
+  policy:
+    numerical:
+      order: asc

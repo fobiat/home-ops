@@ -1,0 +1,9 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: flux-system
+resources:
+  - ./repository.yaml
+  # applejack-git-auth (SSH deploy key for AppleJackRP-sandbox) doesn't exist
+  # yet. Create it with sops the same way cairn-git-auth was created, then
+  # add ./git-auth.sops.yaml here.

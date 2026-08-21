@@ -1,0 +1,10 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./source/ks.yaml
+  - ./namespace/ks.yaml
+  - ./database/ks.yaml
+  - ./registry-auth/ks.yaml
+  - ./app/ks.yaml
+  - ./automation/ks.yaml
