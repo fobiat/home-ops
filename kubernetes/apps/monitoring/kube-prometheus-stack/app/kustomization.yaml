@@ -12,5 +12,4 @@ resources:
   - ./volsync-repo-pvc.yaml
   - ./grafana-restic-secret.sops.yaml
   - ./replicationsource-grafana.yaml
-  # ./alertmanager-discord-webhook.sops.yaml: add once the real webhook is
-  # encrypted (see alertmanager-discord-webhook.PLACEHOLDER.yaml in this dir).
+  - ./alertmanager-discord-webhook.sops.yaml
