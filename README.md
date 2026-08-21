@@ -9,9 +9,14 @@ whole reason it is laid out this way.
 ## Status
 
 Live. This is version 3, on Talos, running real workloads: monitoring
-(kube-prometheus-stack), CNPG-backed Postgres, self-hosted GitHub Actions runners for
-several private repos, Umami analytics, and [Cairn](https://github.com/fobiat/cairn), a UK
-live-incident lookup service deployed straight from its own repository via Flux.
+(kube-prometheus-stack, alerting to Discord), CNPG-backed Postgres, self-hosted GitHub
+Actions runners for several private repos, Umami analytics, Gatus health checks, and
+[Cairn](https://github.com/fobiat/cairn), a UK live-incident lookup service deployed
+straight from its own repository via Flux and the one workload exposed publicly, through a
+Cloudflare Tunnel.
+
+Everything with state is backed up nightly and the restore path is written down, though
+the repository still lives on the same machine. See [Backups](#backups).
 
 The history here goes back to January 2021. Version 1 was Kubernetes on a Dell PowerEdge
 and lived in this repository until electricity prices made a full rack unappealing.
@@ -43,6 +48,8 @@ otherwise.
 | [external-dns](https://github.com/kubernetes-sigs/external-dns) | DNS records from HTTPRoutes |
 | [SOPS](https://github.com/getsops/sops) and [age](https://github.com/FiloSottile/age) | Secrets, encrypted in this repository |
 | [Tailscale](https://tailscale.com) | How I reach the node and the cluster |
+| [VolSync](https://github.com/backube/volsync) | Restic backups of every persistent volume |
+| [Gatus](https://github.com/TwiN/gatus) | Health checks, and the status page |
 | [Renovate](https://github.com/renovatebot/renovate) | Keeps everything current |
 
 ## How it is reached
@@ -55,6 +62,29 @@ a time, as a deliberate decision rather than a default.
 Tailscale runs as a Talos system extension rather than in the cluster, so the node is
 reachable before Kubernetes starts. That matters on the day the cluster is the thing that
 is broken.
+
+## Backups
+
+Three things get backed up, on their own schedules, through
+[restic](https://restic.net):
+
+| What | When (UTC) | Kept |
+|---|---|---|
+| etcd snapshot | 03:15 | 14 |
+| Talos machine config | 03:30 | 30 |
+| Persistent volumes | 04:00, 04:10, 04:40 | 7 daily, 5 weekly, 6 monthly |
+
+The order matters. Both cluster-level jobs finish well before VolSync copies the volume
+they write into, so one restic snapshot holds a consistent set.
+
+The honest caveat: the restic repository is a second SSD **on the same machine**. That
+survives a bad upgrade, a corrupted etcd, or a fat-fingered `kubectl delete`. It does not
+survive the machine. Moving the repository to object storage is the open piece of work,
+and until it lands this is a rollback mechanism rather than disaster recovery.
+
+Restoring is the part people skip, so it has its own runbook:
+[Restore](docs/runbooks/restore.md) for the whole node, and
+[Etcd snapshot restore](docs/runbooks/etcd-restore.md) for the control plane on its own.
 
 ## Layout
 
@@ -70,7 +100,9 @@ docs/            Runbooks, decision records, and how to rebuild this from nothin
 
 ## Documentation
 
-Full docs are in [`docs/`](docs/). Worth reading first:
+Published at [fobiat.github.io/home-ops](https://fobiat.github.io/home-ops/), and
+mirrored inside the tailnet at `docs.lab.fobiat.dev`. The source is in
+[`docs/`](docs/). Worth reading first:
 
 - [Bootstrap](docs/bootstrap.md), bare disk to running cluster
 - [Restore](docs/runbooks/restore.md), what to do when the disk is gone
