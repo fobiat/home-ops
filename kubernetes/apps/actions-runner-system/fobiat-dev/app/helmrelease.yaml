@@ -39,7 +39,7 @@ spec:
     # The namespace's shared ResourceQuota, not this number, is the real
     # cross-repo ceiling once more than one scale set can be busy at once.
     minRunners: 0
-    maxRunners: 2
+    maxRunners: 1
     # kubernetes mode: see ADR 0015 for why (no Docker daemon on Talos, no
     # loadable workload kernel modules).
     containerMode:
