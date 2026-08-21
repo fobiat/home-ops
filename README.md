@@ -12,8 +12,7 @@ Live. This is version 3, on Talos, running real workloads: monitoring
 (kube-prometheus-stack, alerting to Discord), CNPG-backed Postgres, self-hosted GitHub
 Actions runners for several private repos, Umami analytics, Gatus health checks, and
 [Cairn](https://github.com/fobiat/cairn), a UK live-incident lookup service deployed
-straight from its own repository via Flux and the one workload exposed publicly, through a
-Cloudflare Tunnel.
+straight from its own repository via Flux and served internally at `cairn.lab.fobiat.dev`.
 
 Everything with state is backed up nightly and the restore path is written down, though
 the repository still lives on the same machine. See [Backups](#backups).
@@ -58,6 +57,11 @@ Nothing is public by default. Services live on `*.lab.fobiat.dev` and resolve on
 Tailscale or the local network. Anything that genuinely needs to be reachable by someone
 without my tailnet gets its own name and goes through a Cloudflare Tunnel, one service at
 a time, as a deliberate decision rather than a default.
+
+Exactly one thing is public today: `insights.fobiat.dev`, which is Umami's collector. The
+route matches two exact paths, `/script.js` and `/api/send`, and nothing else. A request
+for `/` returns 404 because there is no rule for it, which is the intended surface rather
+than a fault. The dashboard itself stays inside the tailnet.
 
 Tailscale runs as a Talos system extension rather than in the cluster, so the node is
 reachable before Kubernetes starts. That matters on the day the cluster is the thing that
