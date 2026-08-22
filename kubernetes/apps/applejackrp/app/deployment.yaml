@@ -37,6 +37,13 @@ spec:
           # published build rather than :latest, since :latest would drift
           # silently with no automation watching for it.
           image: ghcr.io/fobiat/applejackrp-sandbox:20260822112346
+          # The dedicated server reads console commands (`game <ident>
+          # <mapident>`) from stdin, and Kubernetes only wires stdin up for a
+          # container created with these two set - it can't be attached
+          # retroactively. Needed to load the actual gamemode/map rather than
+          # sitting at the bare console, since +project alone doesn't do that.
+          stdin: true
+          tty: true
           env:
             - name: SERVER_NAME
               value: "AppleJackRP Dev"
