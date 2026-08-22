@@ -10,5 +10,10 @@ spec:
   image: ghcr.io/fobiat/applejackrp-sandbox
   interval: 5m
   # Private package, same as cairn-web: needs read:packages credentials.
+  # Named applejackrp-ghcr-pull-secret, not ghcr-pull-secret: that name
+  # collides with cairn's own flux-system copy (kubernetes/apps/cairn/
+  # automation/app/ghcr-pull-secret.sops.yaml), same namespace, same name -
+  # two Kustomizations racing to own one object, last reconcile wins. Found
+  # 2026-08-22 after this secret kept reverting to cairn's older content.
   secretRef:
-    name: ghcr-pull-secret
+    name: applejackrp-ghcr-pull-secret
