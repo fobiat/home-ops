@@ -5,6 +5,15 @@
 # PLAN.md's phase three section warns about. `max` also caps any step that
 # does declare its own resources, so the ResourceQuota's ceiling can't be
 # reached by one oversized pod.
+#
+# default.memory raised 512Mi -> 1Gi and max.memory 1Gi -> 2Gi on
+# 2026-08-22: AppleJackRP-sandbox's site-build job (astro build + pagefind
+# search-index generation over 66 HTML pages, node:22, no resources: of its
+# own so it inherited these defaults) was OOM-killed mid-pagefind (exit 137,
+# confirmed in the job's own logs, not inferred) at the 512Mi/1Gi ceiling.
+# cpu is untouched - the failure was memory-shaped, not CPU-shaped. See the
+# ResourceQuota in this same directory for the matching bump and the margin
+# math this stays inside.
 apiVersion: v1
 kind: LimitRange
 metadata:
@@ -17,7 +26,7 @@ spec:
         memory: 128Mi
       default:
         cpu: 500m
-        memory: 512Mi
+        memory: 1Gi
       max:
         cpu: "1"
-        memory: 1Gi
+        memory: 2Gi
