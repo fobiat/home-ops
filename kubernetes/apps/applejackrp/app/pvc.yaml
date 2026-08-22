@@ -1,0 +1,22 @@
+---
+# Mounted at /home/container/.wine (see deployment.yaml): the one path the
+# image leaves empty rather than baking content into, so a PVC there can't
+# shadow anything. It's also where a Windows app's AppData-equivalent local
+# storage lives under Wine, which is where this gamemode's local save data
+# (Code/Storage/LocalDocumentStore in the AppleJackRP-sandbox repo) most
+# plausibly ends up. Not confirmed against a live boot that actually loaded
+# a map - the local validation in this session only reached the server's
+# console, not a running session - so treat the exact subpath as reasoned
+# rather than verified, and check what's actually written there once this
+# runs for real.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: applejackrp-wine-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 5Gi

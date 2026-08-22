@@ -4,10 +4,7 @@ kind: Kustomization
 resources:
   - ./imagerepository.yaml
   - ./imagepolicy.yaml
-  # ghcr-pull-secret.sops.yaml belongs here too (flux-system's own copy,
-  # separate from registry-auth's, matching cairn/automation) — same
-  # not-created-yet reason as registry-auth/app.
-  #
+  - ./ghcr-pull-secret.sops.yaml
   # imageupdateautomation.yaml deliberately isn't scaffolded yet. cairn's
   # points at cairn's own repo, using a write-scoped deploy key created just
   # for that (cairn/source/app/git-auth.sops.yaml). This app's manifests are

@@ -1,0 +1,23 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: applejackrp
+  namespace: flux-system
+spec:
+  targetNamespace: applejackrp
+  dependsOn:
+    - name: applejackrp-namespace
+    - name: applejackrp-registry-auth
+  path: ./kubernetes/apps/applejackrp/app
+  prune: true
+  wait: true
+  interval: 1h
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
