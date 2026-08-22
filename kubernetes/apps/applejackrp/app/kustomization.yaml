@@ -5,3 +5,4 @@ namespace: applejackrp
 resources:
   - ./pvc.yaml
   - ./deployment.yaml
+  - ./applejackrp-gslt.sops.yaml

@@ -45,14 +45,14 @@ spec:
                 secretKeyRef:
                   name: applejackrp-gslt
                   key: token
-                  # Without this the server still starts (server/entrypoint.sh
-                  # warns rather than refuses), but per the SDR join-flow
-                  # research, the GSLT is what gives the server a persistent
-                  # Steam ID to generate a join link from - not optional for
-                  # anyone to actually be able to connect. Secret doesn't
-                  # exist yet; create it the same way as ghcr-pull-secret
-                  # (see registry-auth/app/kustomization.yaml's note).
-                  optional: true
+                  # Registered against Steam AppID 590830 (s&box's client app,
+                  # not the anonymous-download dedicated-server tool app
+                  # 1892930 - GSLT registration requires Steam-verified
+                  # ownership, which only the client app has). Required, not
+                  # optional: per the SDR join-flow research, the GSLT is what
+                  # gives the server a persistent Steam ID to generate a join
+                  # link from.
+                  optional: false
           volumeMounts:
             - name: wine-data
               mountPath: /home/container/.wine
