@@ -70,20 +70,22 @@ spec:
           # conflated the host's spare capacity with what's actually given
           # to this VM.
           #
-          # memory temporarily shrunk from 2Gi/4Gi to fit the ~1.48Gi of
-          # requestable headroom left at 79% node memory already committed
-          # (FailedScheduling: "Insufficient memory" at 2Gi). This is a
-          # boot/mount-path smoke test only, not a real capacity budget -
-          # expect an OOM kill under any real player load at this ceiling.
-          # Revert to 2Gi/4Gi once the pending VM RAM bump (tasks.md,
-          # blocked on Kyle since 2026-08-21) lands.
+          # 2026-08-22: the 1Gi/2Gi smoke-test shrink here OOM-killed the
+          # whole node repeatedly (kube-apiserver included) once the server
+          # loaded a real map - 2Gi wasn't a safe ceiling, it was just what
+          # fit at the time. Fixed by suspending the monitoring HelmReleases
+          # (kube-prometheus-stack, loki, alloy; ~1.6Gi requested) rather than
+          # by shrinking this further, since observability isn't essential to
+          # keep the cluster or this server running. Revisit resizing this
+          # once the pending VM RAM bump (tasks.md, blocked on Kyle since
+          # 2026-08-21) lands and monitoring can come back.
           resources:
             requests:
               cpu: "1"
-              memory: 1Gi
+              memory: 2Gi
             limits:
               cpu: "3"
-              memory: 2Gi
+              memory: 4Gi
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
