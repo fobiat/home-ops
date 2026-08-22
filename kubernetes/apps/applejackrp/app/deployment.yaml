@@ -58,16 +58,25 @@ spec:
               mountPath: /home/container/.wine
           # Reasoned starting point, not measured: Wine running a Source
           # 2-class engine under emulation is heavier than anything else on
-          # this single 4-core/32GB node, and nothing here has been load
-          # tested with real players. Expect to revisit after the first
-          # real session.
+          # this single 4-core node. Corrected 2026-08-22: the node has
+          # 8093776Ki (~7.7GiB) allocatable, not 32GB - that number
+          # conflated the host's spare capacity with what's actually given
+          # to this VM.
+          #
+          # memory temporarily shrunk from 2Gi/4Gi to fit the ~1.48Gi of
+          # requestable headroom left at 79% node memory already committed
+          # (FailedScheduling: "Insufficient memory" at 2Gi). This is a
+          # boot/mount-path smoke test only, not a real capacity budget -
+          # expect an OOM kill under any real player load at this ceiling.
+          # Revert to 2Gi/4Gi once the pending VM RAM bump (tasks.md,
+          # blocked on Kyle since 2026-08-21) lands.
           resources:
             requests:
               cpu: "1"
-              memory: 2Gi
+              memory: 1Gi
             limits:
               cpu: "3"
-              memory: 4Gi
+              memory: 2Gi
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
