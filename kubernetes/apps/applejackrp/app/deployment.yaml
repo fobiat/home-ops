@@ -33,11 +33,10 @@ spec:
           # {"$imagepolicy": "flux-system:applejackrp-sandbox"}
           # No ImageUpdateAutomation exists yet to act on that setter (see
           # automation/app/kustomization.yaml's comment on why), so this tag
-          # is a placeholder until either that's wired up or it's bumped by
-          # hand. It also doesn't exist yet: server-image in
-          # AppleJackRP-sandbox's ci.yml needs kyle-X1Carbon online to
-          # actually publish it.
-          image: ghcr.io/fobiat/applejackrp-sandbox:latest
+          # is bumped by hand until that's wired up. Pinned to the first
+          # published build rather than :latest, since :latest would drift
+          # silently with no automation watching for it.
+          image: ghcr.io/fobiat/applejackrp-sandbox:20260822112346
           env:
             - name: SERVER_NAME
               value: "AppleJackRP Dev"

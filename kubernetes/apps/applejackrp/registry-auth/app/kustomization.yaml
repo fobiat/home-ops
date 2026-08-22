@@ -4,7 +4,4 @@ kind: Kustomization
 namespace: applejackrp
 resources:
   - ./serviceaccount.yaml
-  # ghcr-pull-secret.sops.yaml belongs here too, matching cairn/registry-auth.
-  # Not created yet: it needs a real GHCR PAT with read:packages for the
-  # private applejackrp-sandbox package, which only a human can mint. See
-  # the runbook note for the exact `sops -e` command to add it.
+  - ./ghcr-pull-secret.sops.yaml
