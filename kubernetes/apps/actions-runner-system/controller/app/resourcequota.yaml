@@ -24,6 +24,16 @@
 # than concurrently — not a scheduling policy, a capacity one. Tighter than
 # the original 2 cores (50% of the node), this is 1.5 (37.5%), an even wider
 # platform margin, not a narrower one.
+#
+# limits.memory raised 4Gi -> 6Gi on 2026-08-22, alongside the LimitRange
+# bump in this same directory (default.memory 512Mi -> 1Gi, max 1Gi -> 2Gi)
+# that fixed a real OOM kill (exit 137) in AppleJackRP-sandbox's site-build
+# job. Worst case under the new ceiling, a job pair's job-container half
+# alone can now claim up to 2Gi (the new max) instead of 1Gi; +2Gi of new
+# headroom absorbs that plus the wider default without touching requests.cpu/
+# requests.memory/limits.cpu, none of which were implicated in the failure -
+# same principle as the CPU-only fix already documented above, applied to
+# the dimension that actually broke this time.
 apiVersion: v1
 kind: ResourceQuota
 metadata:
@@ -33,4 +43,4 @@ spec:
     requests.cpu: "1"
     requests.memory: 2Gi
     limits.cpu: "1500m"
-    limits.memory: 4Gi
+    limits.memory: 6Gi
