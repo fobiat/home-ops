@@ -1,0 +1,41 @@
+---
+# Cairn's own HTTPRoute lives in its namespace and attaches to the internal
+# Gateway. This one is separate on purpose: the external-route-namespace
+# admission policy denies a parentRef named "external" from anywhere but
+# network-public, so the public route cannot sit beside the app.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: cairn
+spec:
+  parentRefs:
+    - name: external
+      sectionName: cairn
+  hostnames:
+    - cairn.fobiat.dev
+  rules:
+    # An exact match outranks the prefix rule below, so this is what /metrics
+    # hits. cairn-web serves Prometheus metrics on the same port as the site
+    # and checks nothing itself, so without this rule the public hostname
+    # publishes every source id, run outcome and freshness figure Cairn holds.
+    # A redirect rather than a pass-through: the scrape is a ServiceMonitor
+    # hitting the Service directly, so nothing legitimate arrives here.
+    - matches:
+        - path:
+            type: Exact
+            value: /metrics
+      filters:
+        - type: RequestRedirect
+          requestRedirect:
+            path:
+              type: ReplaceFullPath
+              replaceFullPath: /
+            statusCode: 302
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: cairn-web
+          namespace: cairn
+          port: 80

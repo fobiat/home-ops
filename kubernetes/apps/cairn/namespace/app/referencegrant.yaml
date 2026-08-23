@@ -1,0 +1,18 @@
+---
+# The public HTTPRoute is forced into network-public by admission policy, so
+# reaching cairn-web crosses a namespace and Gateway API requires the target
+# side to opt in. Without this the route is Accepted while ResolvedRefs stays
+# false, which serves 500s rather than failing visibly at deploy time.
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: cairn-web-from-network-public
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: network-public
+  to:
+    - group: ""
+      kind: Service
+      name: cairn-web

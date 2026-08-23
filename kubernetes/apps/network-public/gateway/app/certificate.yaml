@@ -10,3 +10,15 @@ spec:
     kind: ClusterIssuer
   dnsNames:
     - insights.fobiat.dev
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: cairn-fobiat-dev
+spec:
+  secretName: cairn-fobiat-dev-tls
+  issuerRef:
+    name: letsencrypt-production
+    kind: ClusterIssuer
+  dnsNames:
+    - cairn.fobiat.dev
