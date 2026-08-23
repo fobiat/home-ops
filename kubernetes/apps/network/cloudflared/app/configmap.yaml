@@ -16,4 +16,12 @@ data:
         originRequest:
           originServerName: insights.fobiat.dev
           httpHostHeader: insights.fobiat.dev
+      - hostname: cairn.fobiat.dev
+        service: https://cilium-gateway-external.network-public.svc.cluster.local:443
+        originRequest:
+          # The gateway picks its listener by SNI, so both fields have to name
+          # the public hostname. Sending the gateway's own name here lands on
+          # the insights listener and serves the wrong certificate.
+          originServerName: cairn.fobiat.dev
+          httpHostHeader: cairn.fobiat.dev
       - service: http_status:404

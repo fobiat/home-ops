@@ -1,0 +1,20 @@
+---
+# Cairn's own HTTPRoute lives in its namespace and attaches to the internal
+# Gateway. This one is separate on purpose: the external-route-namespace
+# admission policy denies a parentRef named "external" from anywhere but
+# network-public, so the public route cannot sit beside the app.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: cairn
+spec:
+  parentRefs:
+    - name: external
+      sectionName: cairn
+  hostnames:
+    - cairn.fobiat.dev
+  rules:
+    - backendRefs:
+        - name: cairn-web
+          namespace: cairn
+          port: 80
