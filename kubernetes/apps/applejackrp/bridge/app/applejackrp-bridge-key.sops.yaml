@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: applejackrp-bridge-key
+    namespace: applejackrp
+stringData:
+    api-key: ENC[AES256_GCM,data:QfVDRA5R1lxZNX51GMeqwFmL68kd0ecg0es1TnLazS4/FQD7hA8QPLl8EaM8gGx9smux2LFijYpX6dr2dwdZog==,iv:g7FiPHeOUWWVXI/KFV8j3ugohliKWaT+RVQRZeT6jy8=,tag:NU9a/hZmo4t6qkfA43vVvA==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBmSmQ5VTVKVkhTZGZJeVZO
+            NitxWlJmSzA3b2FhQk4vTVlPMmJtb0FXOEI0ClNmbjBrN0ZXM0dYVWJkM3VNVlEz
+            cHA4VmNYcUdHbWsvcGl5ZDEvTTFYYTgKLS0tIGtXbUprcUdyRk0wNmdQcW9zeWUx
+            V0ZLTlZFMnI5dlJIN1ZlVWw0QVBIcVkK8VzO2J3Tsxbv2VA0MIu/SloG50oNQKDK
+            vBngUUY3XCnVPiPodfnaByWdpY8MTzGYNLp0znEjT+rnaBBopqB6Ag==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age16p8gv792c4npw2xt3pq8yhu23u47v2sprdatceq779r34nzp24pqrd92vg
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-08-24T18:28:21Z"
+    mac: ENC[AES256_GCM,data:Aca3+u+BBDITqb6L8aiol5UnPTnQCe9jXpAz07L1OrM+b814pUJPcIxyc3TWUCBlIvhgzyoNIhoyDEkgXmnOM5FmGxJeg4OY6su5EcWEbwMNCs6W6Dijo49CGT33y5gKBA9M5TFCLYT79BbGJWK19aTqo6BKRqxxfgurlwrOP4c=,iv:x/RU/0F1UDd4zVq6zKPw1Fbp3B1TeC10OClW6O2vIrg=,tag:2Io12b4xnbfKNlnuSSqHAQ==,type:str]
+    version: 3.13.3

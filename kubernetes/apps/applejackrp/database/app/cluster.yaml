@@ -1,0 +1,26 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: applejackrp-db
+spec:
+  instances: 1
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.4-minimal-trixie
+  bootstrap:
+    initdb:
+      database: applejackrp
+      owner: applejackrp
+  storage:
+    size: 5Gi
+    storageClass: local-path
+  # Deliberately smaller than umami-db's ceiling. This node runs the game server
+  # at a 4Gi limit and loading a real map has OOM-killed the control plane
+  # before (see the app deployment's own comment), so the database gets the
+  # smallest limit that still holds a working set of documents.
+  resources:
+    requests:
+      cpu: 50m
+      memory: 192Mi
+    limits:
+      cpu: 500m
+      memory: 384Mi
