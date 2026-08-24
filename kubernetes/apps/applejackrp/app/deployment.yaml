@@ -36,7 +36,7 @@ spec:
           # is bumped by hand until that's wired up. Pinned to the first
           # published build rather than :latest, since :latest would drift
           # silently with no automation watching for it.
-          image: ghcr.io/fobiat/applejackrp-sandbox:20260824164409
+          image: ghcr.io/fobiat/applejackrp-sandbox:20260824192458
           # The dedicated server reads console commands (`game <ident>
           # <mapident>`) from stdin, and Kubernetes only wires stdin up for a
           # container created with these two set - it can't be attached
