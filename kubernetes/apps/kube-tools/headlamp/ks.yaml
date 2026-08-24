@@ -5,6 +5,11 @@ metadata:
   name: headlamp
   namespace: flux-system
 spec:
+  # Suspended 2026-08-24 to free memory for the applejackrp dev server.
+  # Reverse with scripts/cluster-restore-nonvital.sh, or by deleting this
+  # line. Suspended rather than removed from the parent kustomization,
+  # which would prune the app and its data instead of pausing it.
+  suspend: true
   targetNamespace: kube-tools
   dependsOn:
     - name: network-gateway
