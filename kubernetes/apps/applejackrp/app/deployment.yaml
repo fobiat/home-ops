@@ -47,6 +47,21 @@ spec:
           env:
             - name: SERVER_NAME
               value: "AppleJackRP Dev"
+            # Load the published package rather than the local .sbproj. The
+            # image ships no Libraries/ (server/Dockerfile copies only the
+            # sbproj, Code/, Assets/ and ProjectSettings/), so the local path
+            # cannot resolve the sbproj's PackageReferences: the project never
+            # finishes loading, NetworkBootstrap never runs, no lobby is
+            # created and the server shows up nowhere. By ident the server
+            # fetches the package and its references itself.
+            # Only works once fobiat.applejackrp is actually published.
+            - name: SBOX_GAME_IDENT
+              value: "fobiat.applejackrp"
+            # The map is its own published package, passed as +game's second
+            # argument. Ident is the sbproj's Metadata.MapList entry, not the
+            # bare Hammer name rp_downtown_3t.
+            - name: SBOX_MAP_IDENT
+              value: "thieves.rpdowntown3t"
             - name: GSLT_TOKEN
               valueFrom:
                 secretKeyRef:
