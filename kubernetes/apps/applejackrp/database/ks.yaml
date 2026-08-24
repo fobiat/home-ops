@@ -1,0 +1,23 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: applejackrp-db
+  namespace: flux-system
+spec:
+  targetNamespace: applejackrp
+  dependsOn:
+    - name: applejackrp-namespace
+    - name: cnpg-operator
+    - name: cnpg-barman-plugin
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: applejackrp-db
+  path: ./kubernetes/apps/applejackrp/database/app
+  prune: true
+  wait: true
+  interval: 1h
+  timeout: 15m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system

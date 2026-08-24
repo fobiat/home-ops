@@ -1,0 +1,90 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: applejackrp-bridge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: applejackrp-bridge
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: applejackrp-bridge
+    spec:
+      containers:
+        - name: bridge
+          image: ghcr.io/fobiat/applejackrp-bridge:20260824190000
+          env:
+            # CNPG publishes the app credentials as separate keys, and Npgsql
+            # does not parse the postgresql:// URI form, so the connection
+            # string is composed here from the parts. $(VAR) is Kubernetes'
+            # own interpolation, not a shell: it only resolves names declared
+            # above it in this same list.
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: applejackrp-db-app
+                  key: host
+            - name: DB_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: applejackrp-db-app
+                  key: port
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: applejackrp-db-app
+                  key: dbname
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: applejackrp-db-app
+                  key: username
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: applejackrp-db-app
+                  key: password
+            - name: BRIDGE_DATABASE_URL
+              value: >-
+                Host=$(DB_HOST);Port=$(DB_PORT);Database=$(DB_NAME);Username=$(DB_USER);Password=$(DB_PASS);SSL
+                Mode=Prefer;Trust Server Certificate=true
+            - name: BRIDGE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: applejackrp-bridge-key
+                  key: api-key
+          ports:
+            - name: http
+              containerPort: 8080
+          # This one can have probes, unlike the game server next door: it is
+          # ordinary HTTP on a known port.
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault

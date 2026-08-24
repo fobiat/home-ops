@@ -36,7 +36,7 @@ spec:
           # is bumped by hand until that's wired up. Pinned to the first
           # published build rather than :latest, since :latest would drift
           # silently with no automation watching for it.
-          image: ghcr.io/fobiat/applejackrp-sandbox:20260824154334
+          image: ghcr.io/fobiat/applejackrp-sandbox:20260824164409
           # The dedicated server reads console commands (`game <ident>
           # <mapident>`) from stdin, and Kubernetes only wires stdin up for a
           # container created with these two set - it can't be attached
@@ -62,6 +62,17 @@ spec:
             # bare Hammer name rp_downtown_3t.
             - name: SBOX_MAP_IDENT
               value: "thieves.rpdowntown3t"
+            # Point the gamemode's HostedDocumentStore at the in-cluster
+            # bridge. Without these the entrypoint leaves storage local, and
+            # local means sbox/data inside the container layer, which no
+            # volume backs: state is lost on every restart.
+            - name: BRIDGE_URL
+              value: "http://applejackrp-bridge.applejackrp.svc.cluster.local:8080"
+            - name: BRIDGE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: applejackrp-bridge-key
+                  key: api-key
             - name: GSLT_TOKEN
               valueFrom:
                 secretKeyRef:
