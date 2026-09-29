@@ -10,6 +10,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Homepage: Cambridge weather, a UK clock, node headroom and monitoring health,
+  focused Grafana links, VPS home and Cairn local context.
+
 - Repository scaffolding for v3: docs site, decision records, issue templates, CI, and
   the Taskfile and mise setup that pins the tooling.
 

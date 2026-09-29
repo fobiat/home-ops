@@ -54,25 +54,117 @@ spec:
       settingsString: |
         title: Home Ops
         headerStyle: boxed
+        useEqualHeights: true
         layout:
+          Overview:
+            style: row
+            columns: 3
           Cluster:
             style: row
             columns: 2
-      bookmarks: []
-      # Empty, not absent: with no services key at all the chart ships its own
-      # sample services.yaml, and Homepage renders the three "My First Service"
-      # demo entries alongside the discovered ones.
-      services: []
-      # Services come from gethomepage.dev/* annotations on each app's own
-      # HTTPRoute (see e.g. grafana's), not a static list, so a new app shows
-      # up without a Homepage edit. The old static list carried a dead
-      # Prometheus link with no HTTPRoute behind it.
+      bookmarks:
+        - Monitoring:
+            - Node detail:
+                - icon: grafana.png
+                  href: https://grafana.lab.fobiat.dev/d/rYdddlPWk
+                  description: CPU, memory, disk and network
+            - Flux status:
+                - icon: flux-cd.png
+                  href: https://grafana.lab.fobiat.dev/d/flux-cluster
+                  description: Reconciliation and delivery
+            - Certificates:
+                - icon: cert-manager.png
+                  href: https://grafana.lab.fobiat.dev/d/cert-manager
+                  description: Issuance and renewal
+        - Daily:
+            - Cairn:
+                - abbr: CA
+                  href: https://cairn.lab.fobiat.dev/at?q=Cambridge
+                  description: Local warnings and source freshness
+            - VPS home:
+                - abbr: VP
+                  href: http://home.dev.fobiat.dev
+                  description: News, development and usage
+      # A real list prevents the chart's sample services from appearing.
+      # HTTPRoute annotations still discover each app in the Cluster group.
+      services:
+        - Overview:
+            - Node headroom:
+                href: https://grafana.lab.fobiat.dev/d/rYdddlPWk
+                icon: grafana.png
+                description: Current node utilisation from Prometheus
+                widget:
+                  type: prometheusmetric
+                  url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+                  refreshInterval: 60000
+                  metrics:
+                    - label: CPU
+                      query: 1 - avg(rate(node_cpu_seconds_total{mode="idle"}[5m]))
+                      format:
+                        type: percent
+                        options:
+                          maximumFractionDigits: 0
+                    - label: Memory
+                      query: 1 - sum(node_memory_MemAvailable_bytes) / sum(node_memory_MemTotal_bytes)
+                      format:
+                        type: percent
+                        options:
+                          maximumFractionDigits: 0
+            - Needs attention:
+                href: https://grafana.lab.fobiat.dev/alerting/list
+                icon: prometheus.png
+                description: Firing alerts and pod health
+                widget:
+                  type: prometheusmetric
+                  url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+                  refreshInterval: 60000
+                  metrics:
+                    - label: Alerts
+                      query: count(ALERTS{alertstate="firing",alertname!~"Watchdog|InfoInhibitor"}) or vector(0)
+                      format:
+                        type: number
+                    - label: Pending pods
+                      query: sum(kube_pod_status_phase{phase="Pending"})
+                      format:
+                        type: number
+                    - label: Restarts / hour
+                      query: sum(increase(kube_pod_container_status_restarts_total[1h]))
+                      format:
+                        type: number
+                        options:
+                          maximumFractionDigits: 0
+            - Service availability:
+                href: https://status.lab.fobiat.dev
+                icon: gatus.png
+                description: App health checks maintained by each service
+                widget:
+                  type: gatus
+                  url: http://gatus.default.svc.cluster.local
+                  fields: ["up", "down", "uptime"]
       kubernetes:
         mode: cluster
         gateway: true
       widgets:
+        - datetime:
+            text_size: md
+            locale: en-GB
+            format:
+              dateStyle: medium
+              timeStyle: short
+              hourCycle: h23
+              timeZone: Europe/London
+        - openmeteo:
+            label: Cambridge
+            latitude: 52.2053
+            longitude: 0.1218
+            timezone: Europe/London
+            units: metric
+            cache: 15
+            format:
+              maximumFractionDigits: 1
         - resources:
             backend: resources
+            label: Homepage process
             expanded: true
             cpu: true
             memory: true
