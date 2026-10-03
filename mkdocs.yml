@@ -52,6 +52,7 @@ nav:
   - Hubble: hubble.md
   - tuppr: tuppr.md
   - Exposure: exposure.md
+  - Agent rules: AGENT_RULES.md
   - Runbooks:
       - Restore: runbooks/restore.md
       - Upgrade: runbooks/upgrade.md

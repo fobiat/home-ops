@@ -8,7 +8,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- The README and docs front page mark the cluster decommissioned on 2026-09-29, with a
+  pointer to where selected services are being rebuilt.
+
 ### Added
+
+- `docs/AGENT_RULES.md`, the public hard rules for agents and contributors.
 
 - Repository scaffolding for v3: docs site, decision records, issue templates, CI, and
   the Taskfile and mise setup that pins the tooling.

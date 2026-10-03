@@ -1,21 +1,29 @@
 # home-ops
 
-Single-node Kubernetes cluster running at home, managed with Flux.
+Single-node Kubernetes cluster that ran at home, managed with Flux.
 
 One Talos Linux node, everything in this repository, nothing configured by hand. If the
-machine dies I want to rebuild it from a clean disk and this Git history, which is the
+machine died I wanted to rebuild it from a clean disk and this Git history, which is the
 whole reason it is laid out this way.
 
 ## Status
 
-Live. This is version 3, on Talos, running real workloads: monitoring
-(kube-prometheus-stack, alerting to Discord), CNPG-backed Postgres, self-hosted GitHub
-Actions runners for several private repos, Umami analytics, Gatus health checks, and
+Decommissioned on 2026-09-29. The cluster no longer runs, and this repository is kept
+as a historical record. Selected services (Umami, Cairn, the Gatus checks, the DNS
+fallback and slskd) are being rebuilt on a VPS platform in the private `fobiat/vps-ops`
+repository, tracked there as issue #43. Changes here are limited to documentation and
+the decommission itself.
+
+Version 3 ran on Talos with real workloads: monitoring (kube-prometheus-stack, alerting
+to Discord), CNPG-backed Postgres, self-hosted GitHub Actions runners for several private
+repos, Umami analytics, Gatus health checks, and
 [Cairn](https://github.com/fobiat/cairn), a UK live-incident lookup service deployed
 straight from its own repository via Flux and served internally at `cairn.lab.fobiat.dev`.
 
-Everything with state is backed up nightly and the restore path is written down, though
-the repository still lives on the same machine. See [Backups](#backups).
+Everything with state was backed up nightly and the restore path is written down, though
+the restic repository lived on the same machine. See [Backups](#backups).
+
+The rest of this page describes the cluster as it ran before the decommission.
 
 The history here goes back to January 2021. Version 1 was Kubernetes on a Dell PowerEdge
 and lived in this repository until electricity prices made a full rack unappealing.
@@ -28,11 +36,11 @@ tag. Version 3 starts here, on Talos.
 | | |
 |---|---|
 | Node | Dell Optiplex 3050 SFF, 4 cores, 8 threads, 32GB |
-| Runs as | Talos VM on Hyper-V, external virtual switch |
+| Ran as | Talos VM on Hyper-V, external virtual switch |
 | Storage | NVMe boot, second SSD for persistent volumes |
-| Planned | Minisforum MS-03 class, at which point the Optiplex becomes the spare |
+| Was planned | Minisforum MS-03 class, at which point the Optiplex would have become the spare |
 
-One node means no high availability. Upgrades take the cluster down, because there is
+One node meant no high availability. Upgrades took the cluster down, because there was
 nowhere to drain to. The docs say so wherever it matters rather than pretending
 otherwise.
 
@@ -58,7 +66,7 @@ Tailscale or the local network. Anything that genuinely needs to be reachable by
 without my tailnet gets its own name and goes through a Cloudflare Tunnel, one service at
 a time, as a deliberate decision rather than a default.
 
-Exactly one thing is public today: `insights.fobiat.dev`, which is Umami's collector. The
+Exactly one thing was public before the decommission: `insights.fobiat.dev`, which is Umami's collector. The
 route matches two exact paths, `/script.js` and `/api/send`, and nothing else. A request
 for `/` returns 404 because there is no rule for it, which is the intended surface rather
 than a fault. The dashboard itself stays inside the tailnet.
@@ -134,7 +142,7 @@ docs/            Runbooks, decision records, and how to rebuild this from nothin
 ## Documentation
 
 Published at [fobiat.github.io/home-ops](https://fobiat.github.io/home-ops/), and
-mirrored inside the tailnet at `docs.lab.fobiat.dev`. The source is in
+was mirrored inside the tailnet at `docs.lab.fobiat.dev` until the decommission. The source is in
 [`docs/`](docs/). Worth reading first:
 
 - [Bootstrap](docs/bootstrap.md), bare disk to running cluster

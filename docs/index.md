@@ -2,6 +2,12 @@
 
 One Talos node, one Flux repository, no configuration done by hand.
 
+!!! warning "Decommissioned"
+    The cluster was decommissioned on 2026-09-29 and no longer runs. These pages are kept
+    as a historical record. Selected services (Umami, Cairn, the Gatus checks, the DNS
+    fallback and slskd) are being rebuilt on a VPS platform in the private
+    `fobiat/vps-ops` repository, tracked there as issue #43.
+
 If you are looking for something specific:
 
 - **Setting this up from nothing**: [Bootstrap](bootstrap.md)
